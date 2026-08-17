@@ -112,6 +112,14 @@ public final class KubeJavaRecipeModifier {
      * {@link RecipeModificationHandler} loads. Declare all recipe changes here.
      */
     public static void init() {
+        byIds(
+                "create_connected:crafting/kinetics/kinetic_battery",
+                "create:sequenced_assembly/precision_mechanism",
+                "create:mixing/andesite_alloy",
+                "create:mixing/andesite_alloy_from_zinc",
+                "create:crafting/materials/andesite_alloy",
+                "create:crafting/materials/andesite_alloy_from_zinc"
+        ).remove();
     }
 
     // ------------------------------------------------------------------

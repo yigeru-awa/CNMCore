@@ -1,5 +1,6 @@
 package com.onehumanawa.cnmcore;
 
+import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.TerminalRegistry;
 import com.onehumanawa.cnmcore.foundation.data.CreateRegistrate;
 import com.onehumanawa.cnmcore.foundation.data.lang.ModLangProvider;
 import net.minecraft.data.DataGenerator;
@@ -29,6 +30,9 @@ public class CNMCore {
 
         // Register items
         AllItems.register();
+
+        // Register content: wireless redstone control terminal
+        TerminalRegistry.register(modEventBus);
 
         // Register Registrate event listeners
         REGISTRATE.registerEventListeners(modEventBus);
