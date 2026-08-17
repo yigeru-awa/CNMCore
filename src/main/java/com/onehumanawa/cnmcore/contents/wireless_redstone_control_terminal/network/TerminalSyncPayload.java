@@ -13,14 +13,15 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Server -> client snapshot of the circuit graph and all node signal values,
- * sent when the terminal screen is open.
+ * Server -> client snapshot sent while the terminal screen is open:
+ * tab metadata of all programs plus the full graph and signal values of the active program.
  */
-public record TerminalSyncPayload(BlockPos pos, CompoundTag circuit, byte[] values) implements CustomPacketPayload {
+public record TerminalSyncPayload(BlockPos pos, CompoundTag meta, CompoundTag circuit, byte[] values) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<TerminalSyncPayload> TYPE =
             new CustomPacketPayload.Type<>(CNMCore.asResource("wrt_sync"));
     public static final StreamCodec<ByteBuf, TerminalSyncPayload> CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, TerminalSyncPayload::pos,
+            ByteBufCodecs.TRUSTED_COMPOUND_TAG, TerminalSyncPayload::meta,
             ByteBufCodecs.TRUSTED_COMPOUND_TAG, TerminalSyncPayload::circuit,
             ByteBufCodecs.BYTE_ARRAY, TerminalSyncPayload::values,
             TerminalSyncPayload::new);
@@ -35,7 +36,7 @@ public record TerminalSyncPayload(BlockPos pos, CompoundTag circuit, byte[] valu
             Level level = Minecraft.getInstance().level;
             if (level != null
                     && level.getBlockEntity(payload.pos()) instanceof WirelessRedstoneControlTerminalBlockEntity terminal) {
-                terminal.applySync(payload.circuit(), payload.values());
+                terminal.applySync(payload.meta(), payload.circuit(), payload.values());
             }
         });
     }

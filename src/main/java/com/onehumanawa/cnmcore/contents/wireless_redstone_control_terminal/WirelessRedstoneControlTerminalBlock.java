@@ -3,7 +3,6 @@ package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
@@ -73,14 +72,7 @@ public class WirelessRedstoneControlTerminalBlock extends Block implements Entit
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            if (level.getBlockEntity(pos) instanceof WirelessRedstoneControlTerminalBlockEntity terminal) {
-                for (int i = 0; i < terminal.frequencySlots.getSlots(); i++) {
-                    Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(),
-                            terminal.frequencySlots.getStackInSlot(i));
-                }
-            }
-            super.onRemove(state, level, pos, newState, isMoving);
-        }
+        // Nothing to drop: wireless frequencies are ghost references, not physical items
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 }

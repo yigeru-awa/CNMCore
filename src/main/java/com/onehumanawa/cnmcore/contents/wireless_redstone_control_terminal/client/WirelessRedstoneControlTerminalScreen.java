@@ -6,13 +6,19 @@ import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circu
 import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circuit.CircuitNode;
 import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circuit.NodeType;
 import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.network.TerminalEditPayload;
+import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.network.TerminalFrequencyPayload;
+import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.program.ProgramType;
+import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.program.TerminalProgram;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -21,16 +27,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Circuit editor screen: palette on the left, a scrollable node canvas in the middle,
- * config panel on the right and the two Redstone Link frequency pairs on top.
+ * Circuit editor screen: program tabs on top, palette on the left, a scrollable node canvas
+ * in the middle and the config panel on the right.
  *
  * Controls:
+ * - tabs: left-click switches programs, right-click deletes, "+" creates a new one
  * - click a palette button to add a node
  * - drag a node body to move it, middle-click a node body to delete it, right-click to deselect
  * - wiring: click an output port (right side), optionally click blank canvas to add waypoints
  *   (the wire must pass through them), then click the target input port to connect.
  *   Right-click cancels wiring.
  * - right-click an input port to disconnect its wire
+ * - wireless nodes: each has its own frequency, set from the config panel by clicking with a
+ *   held item or dragging an item from JEI (ghost only, nothing is consumed)
  * - drag blank canvas to pan the viewport, use the scrollbars or the mouse wheel to scroll
  * - Delete key removes the selected node
  */
@@ -56,9 +65,15 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
     private static final int PORT_HIT_RADIUS = 5;
     private static final int SCROLLBAR_THICKNESS = 3;
     private static final int SCROLL_STEP = 8;
+    private static final int TAB_Y = 10;
+    private static final int TAB_WIDTH = 40;
+    private static final int TAB_HEIGHT = 14;
+    private static final int TAB_SPACING = 2;
+    private static final int TAB_VISIBLE_MAX = 5;
+    private static final int NAV_WIDTH = 12;
 
     /** Full container background, painted 1:1 (texture size == screen size). Regions:
-     *  (6,6)-(280,28) top bar; (6,30)-(54,150) palette; (54,30)-(220,150) canvas;
+     *  (6,6)-(280,28) top bar with program tabs; (6,30)-(54,150) palette; (54,30)-(220,150) canvas;
      *  (220,30)-(278,150) config panel; (6,218)-(23,235) reusable 18x18 item slot background. */
     private static final ResourceLocation CONTAINER_TEXTURE = ResourceLocation.fromNamespaceAndPath("cnmcore", "textures/gui/wrt_container.png");
     /** Node box: 1 px border + fill, nine-sliced when drawn. */
@@ -99,6 +114,7 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
     private final List<Integer> pendingWaypoints = new ArrayList<>();
     private int scrollX;
     private int scrollY;
+    private int tabScroll;
     private float animationTime;
 
     public WirelessRedstoneControlTerminalScreen(WirelessRedstoneControlTerminalMenu menu, Inventory playerInventory, Component title) {
@@ -115,7 +131,12 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
 
     @Nullable
     private Circuit circuit() {
-        return blockEntity() == null ? null : blockEntity().getCircuit();
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        if (be == null) {
+            return null;
+        }
+        TerminalProgram program = be.activeProgram();
+        return program != null && program.type == ProgramType.REDSTONE ? program.circuit : null;
     }
 
     // Viewport
@@ -170,6 +191,7 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
                 draggingId = -1;
             }
         }
+        keepTabScrollValid();
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
         renderCustomTooltip(graphics, mouseX, mouseY);
@@ -198,6 +220,7 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
                     leftPos + CANVAS_X + 8, topPos + CANVAS_Y + 8, COLOR_ERROR, false);
         }
 
+        drawTabs(graphics, mouseX, mouseY);
         drawPalette(graphics, mouseX, mouseY);
         drawConfigPanel(graphics, mouseX, mouseY);
         drawTopBar(graphics);
@@ -210,12 +233,107 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
     }
 
     private void drawTopBar(GuiGraphics graphics) {
-        graphics.drawString(font, Component.translatable("cnmcore.wrt.rx"), leftPos + 46, topPos + 12, COLOR_TEXT_DIM, false);
-        graphics.drawString(font, Component.translatable("cnmcore.wrt.tx"), leftPos + 102, topPos + 12, COLOR_TEXT_DIM, false);
         Circuit circuit = circuit();
         String count = (circuit == null ? 0 : circuit.getNodes().size()) + "/" + Circuit.MAX_NODES;
-        graphics.drawString(font, Component.translatable("cnmcore.wrt.nodes"), leftPos + 150, topPos + 12, COLOR_TEXT_DIM, false);
-        graphics.drawString(font, count, leftPos + 150 + font.width(Component.translatable("cnmcore.wrt.nodes")) + 4, topPos + 12, COLOR_TEXT, false);
+        graphics.drawString(font, Component.translatable("cnmcore.wrt.nodes"), leftPos + 214, topPos + 13, COLOR_TEXT_DIM, false);
+        graphics.drawString(font, count, leftPos + 218 + font.width(Component.translatable("cnmcore.wrt.nodes")), topPos + 13, COLOR_TEXT, false);
+    }
+
+    // Program tabs
+
+    private List<TerminalProgram> programs() {
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        return be == null ? List.of() : be.getPrograms();
+    }
+
+    private boolean needsTabNav() {
+        return programs().size() > TAB_VISIBLE_MAX;
+    }
+
+    private int tabAreaX() {
+        return leftPos + 8 + (needsTabNav() ? NAV_WIDTH + 2 : 0);
+    }
+
+    private void keepTabScrollValid() {
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        if (be == null) {
+            return;
+        }
+        int max = Math.max(0, programs().size() - TAB_VISIBLE_MAX);
+        tabScroll = Mth.clamp(tabScroll, 0, max);
+        int activeIndex = indexOfProgram(be.getActiveProgramId());
+        if (activeIndex >= 0) {
+            if (activeIndex < tabScroll) {
+                tabScroll = activeIndex;
+            } else if (activeIndex >= tabScroll + TAB_VISIBLE_MAX) {
+                tabScroll = activeIndex - TAB_VISIBLE_MAX + 1;
+            }
+        }
+    }
+
+    private int indexOfProgram(int id) {
+        List<TerminalProgram> list = programs();
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).id == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Rect2i tabRect(int visibleIndex) {
+        return new Rect2i(tabAreaX() + visibleIndex * (TAB_WIDTH + TAB_SPACING), topPos + TAB_Y, TAB_WIDTH, TAB_HEIGHT);
+    }
+
+    private Rect2i navLeftRect() {
+        return new Rect2i(leftPos + 8, topPos + TAB_Y, NAV_WIDTH, TAB_HEIGHT);
+    }
+
+    private Rect2i navRightRect() {
+        int visible = Math.min(TAB_VISIBLE_MAX, programs().size());
+        return new Rect2i(tabAreaX() + visible * (TAB_WIDTH + TAB_SPACING), topPos + TAB_Y, NAV_WIDTH, TAB_HEIGHT);
+    }
+
+    private Rect2i addTabRect() {
+        int afterTabs = needsTabNav() ? navRightRect().getX() + NAV_WIDTH + 2 : tabAreaX() + Math.min(TAB_VISIBLE_MAX, programs().size()) * (TAB_WIDTH + TAB_SPACING);
+        return new Rect2i(afterTabs, topPos + TAB_Y, TAB_HEIGHT, TAB_HEIGHT);
+    }
+
+    private void drawTabs(GuiGraphics graphics, int mouseX, int mouseY) {
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        if (be == null) {
+            return;
+        }
+        List<TerminalProgram> list = programs();
+        int activeId = be.getActiveProgramId();
+
+        if (needsTabNav()) {
+            boolean leftEnabled = tabScroll > 0;
+            button(graphics, navLeftRect(), "<", inRect(mouseX, mouseY, navLeftRect()), leftEnabled ? COLOR_TEXT : COLOR_TEXT_DIM);
+            boolean rightEnabled = tabScroll + TAB_VISIBLE_MAX < list.size();
+            button(graphics, navRightRect(), ">", inRect(mouseX, mouseY, navRightRect()), rightEnabled ? COLOR_TEXT : COLOR_TEXT_DIM);
+        }
+
+        int visible = Math.min(TAB_VISIBLE_MAX, list.size());
+        for (int i = 0; i < visible; i++) {
+            TerminalProgram program = list.get(tabScroll + i);
+            Rect2i rect = tabRect(i);
+            boolean hovered = inRect(mouseX, mouseY, rect);
+            blitBox(graphics, NODE_BOX_TEXTURE, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
+            if (program.id == activeId) {
+                graphics.blit(NODE_FRAME_SELECTED_TEXTURE, rect.getX(), rect.getY(), 0, 0, rect.getWidth(), rect.getHeight(),
+                        rect.getWidth(), rect.getHeight());
+            } else if (hovered) {
+                graphics.blit(NODE_FRAME_ON_TEXTURE, rect.getX(), rect.getY(), 0, 0, rect.getWidth(), rect.getHeight(),
+                        rect.getWidth(), rect.getHeight());
+            }
+            String label = program.name;
+            graphics.drawString(font, label, rect.getX() + (rect.getWidth() - font.width(label)) / 2, rect.getY() + 3,
+                    program.id == activeId ? COLOR_TEXT : COLOR_TEXT_DIM, false);
+        }
+
+        Rect2i add = addTabRect();
+        button(graphics, add, "+", inRect(mouseX, mouseY, add), COLOR_TEXT);
     }
 
     // Nodes & wires
@@ -256,6 +374,15 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
         if (on) {
             int barWidth = Math.max(1, (width - 6) * node.value / 15);
             graphics.fill(x + 3, y + height - 4, x + 3 + barWidth, y + height - 2, COLOR_WIRE_ON);
+        }
+
+        // Own frequency of a wireless node, shown as a small item icon on the node
+        if (node.type.isWireless() && !node.frequency.isEmpty()) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(x + width - 10, y + 1, 200);
+            graphics.pose().scale(0.5f, 0.5f, 0.5f);
+            graphics.renderItem(node.frequency, 0, 0);
+            graphics.pose().popPose();
         }
 
         // Input ports
@@ -448,6 +575,17 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
 
     // Config panel
 
+    /** Ghost frequency slot of the selected wireless node, null when not applicable. */
+    @Nullable
+    public Rect2i frequencySlotRect() {
+        Circuit circuit = circuit();
+        CircuitNode selected = circuit != null && selectedId >= 0 ? circuit.nodeById(selectedId) : null;
+        if (selected == null || !selected.type.isWireless()) {
+            return null;
+        }
+        return new Rect2i(leftPos + CONFIG_X + CONFIG_WIDTH / 2 - 9, topPos + CONFIG_Y + 44, 18, 18);
+    }
+
     private void drawConfigPanel(GuiGraphics graphics, int mouseX, int mouseY) {
         Circuit circuit = circuit();
         int x = leftPos + CONFIG_X;
@@ -460,36 +598,63 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
             Component name = Component.translatable("cnmcore.wrt.node." + selected.type.name().toLowerCase());
             graphics.drawString(font, name, x + (CONFIG_WIDTH - font.width(name)) / 2, y + 15, COLOR_TEXT_DIM, false);
 
-            if (selected.type.isConfigurable()) {
+            if (selected.type.isWireless()) {
+                // Per-node frequency, ghost item only
+                Component label = Component.translatable(selected.type == NodeType.W_IN ? "cnmcore.wrt.rx" : "cnmcore.wrt.tx");
+                graphics.drawString(font, label, x + (CONFIG_WIDTH - font.width(label)) / 2, y + 32, COLOR_TEXT_DIM, false);
+                Rect2i slot = frequencySlotRect();
+                if (slot != null) {
+                    boolean hovered = inRect(mouseX, mouseY, slot);
+                    graphics.blit(CONTAINER_TEXTURE, slot.getX(), slot.getY(), SLOT_BG_U, SLOT_BG_V, SLOT_BG_SIZE, SLOT_BG_SIZE, X_SIZE, Y_SIZE);
+                    if (hovered) {
+                        graphics.blit(NODE_FRAME_SELECTED_TEXTURE, slot.getX() - 1, slot.getY() - 1, 0, 0, 20, 20, 20, 20);
+                    }
+                    if (!selected.frequency.isEmpty()) {
+                        graphics.renderItem(selected.frequency, slot.getX() + 1, slot.getY() + 1);
+                    }
+                }
+                Component freqName = selected.frequency.isEmpty() ? Component.translatable("cnmcore.wrt.freq.empty")
+                        : selected.frequency.getHoverName();
+                graphics.drawString(font, freqName, x + (CONFIG_WIDTH - font.width(freqName)) / 2, y + 66, COLOR_TEXT, false);
+            } else if (selected.type.isConfigurable()) {
                 graphics.drawString(font, configLabel(selected.type), x + 3, y + 32, COLOR_TEXT_DIM, false);
-                button(graphics, x + 4, y + 44, 12, 12, "-", inRect(mouseX, mouseY, x + 4, y + 44, 12, 12));
-                button(graphics, x + CONFIG_WIDTH - 16, y + 44, 12, 12, "+", inRect(mouseX, mouseY, x + CONFIG_WIDTH - 16, y + 44, 12, 12));
+                button(graphics, new Rect2i(x + 4, y + 44, 12, 12), "-", inRect(mouseX, mouseY, x + 4, y + 44, 12, 12), COLOR_TEXT);
+                button(graphics, new Rect2i(x + CONFIG_WIDTH - 16, y + 44, 12, 12), "+", inRect(mouseX, mouseY, x + CONFIG_WIDTH - 16, y + 44, 12, 12), COLOR_TEXT);
                 Component value = configValue(selected);
                 graphics.drawString(font, value, x + (CONFIG_WIDTH - font.width(value)) / 2, y + 46, COLOR_TEXT, false);
             } else {
                 Component note = configNote(selected.type);
                 if (note != null) {
-                    graphics.drawString(font, note, x + (CONFIG_WIDTH - font.width(note)) / 2, y + 36, COLOR_TEXT_DIM, false);
+                    drawWrappedText(graphics, note, x + 3, y + 36, CONFIG_WIDTH - 6, COLOR_TEXT_DIM);
                 }
             }
 
-            button(graphics, x + 4, y + 64, CONFIG_WIDTH - 8, 12, Component.translatable("cnmcore.wrt.delete").getString(),
-                    inRect(mouseX, mouseY, x + 4, y + 64, CONFIG_WIDTH - 8, 12));
+            button(graphics, new Rect2i(x + 4, y + CONFIG_HEIGHT - 32, CONFIG_WIDTH - 8, 12),
+                    Component.translatable("cnmcore.wrt.delete").getString(),
+                    inRect(mouseX, mouseY, x + 4, y + CONFIG_HEIGHT - 32, CONFIG_WIDTH - 8, 12), COLOR_TEXT);
         } else {
             Component hint = Component.translatable("cnmcore.wrt.hint");
             graphics.drawString(font, hint, x + (CONFIG_WIDTH - font.width(hint)) / 2, y + 4, COLOR_TEXT_DIM, false);
         }
 
-        button(graphics, x + 4, y + CONFIG_HEIGHT - 16, CONFIG_WIDTH - 8, 12, Component.translatable("cnmcore.wrt.clear").getString(),
-                inRect(mouseX, mouseY, x + 4, y + CONFIG_HEIGHT - 16, CONFIG_WIDTH - 8, 12));
+        button(graphics, new Rect2i(x + 4, y + CONFIG_HEIGHT - 16, CONFIG_WIDTH - 8, 12), Component.translatable("cnmcore.wrt.clear").getString(),
+                inRect(mouseX, mouseY, x + 4, y + CONFIG_HEIGHT - 16, CONFIG_WIDTH - 8, 12), COLOR_TEXT);
     }
 
-    private void button(GuiGraphics graphics, int x, int y, int width, int height, String text, boolean hovered) {
-        blitBox(graphics, NODE_BOX_TEXTURE, x, y, width, height);
-        if (hovered) {
-            graphics.blit(NODE_FRAME_SELECTED_TEXTURE, x, y, 0, 0, width, height, width, height);
+    private void drawWrappedText(GuiGraphics graphics, Component text, int x, int y, int width, int color) {
+        for (net.minecraft.util.FormattedCharSequence line : font.split(text, width)) {
+            graphics.drawString(font, line, x, y, color, false);
+            y += font.lineHeight + 1;
         }
-        graphics.drawString(font, text, x + (width - font.width(text)) / 2, y + 2, COLOR_TEXT, false);
+    }
+
+    private void button(GuiGraphics graphics, Rect2i rect, String text, boolean hovered, int color) {
+        blitBox(graphics, NODE_BOX_TEXTURE, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
+        if (hovered) {
+            graphics.blit(NODE_FRAME_SELECTED_TEXTURE, rect.getX(), rect.getY(), 0, 0, rect.getWidth(), rect.getHeight(),
+                    rect.getWidth(), rect.getHeight());
+        }
+        graphics.drawString(font, text, rect.getX() + (rect.getWidth() - font.width(text)) / 2, rect.getY() + 2, color, false);
     }
 
     private Component configLabel(NodeType type) {
@@ -521,8 +686,6 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
     @Nullable
     private Component configNote(NodeType type) {
         return switch (type) {
-            case W_IN -> Component.translatable("cnmcore.wrt.note.rx");
-            case W_OUT -> Component.translatable("cnmcore.wrt.note.tx");
             case OUTPUT -> Component.translatable("cnmcore.wrt.note.passthrough");
             case LATCH -> Component.translatable("cnmcore.wrt.note.latch");
             default -> null;
@@ -533,6 +696,10 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
 
     private boolean inRect(double mouseX, double mouseY, int x, int y, int width, int height) {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    private boolean inRect(double mouseX, double mouseY, Rect2i rect) {
+        return inRect(mouseX, mouseY, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
     }
 
     @Nullable
@@ -599,6 +766,10 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
+        if (handleTabClick(mouseX, mouseY, button)) {
+            return true;
+        }
+
         int paletteIndex = paletteButtonIndex(mouseX, mouseY);
         if (paletteIndex >= 0 && button == 0) {
             sendEdit(0, paletteIndex,
@@ -632,6 +803,49 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean handleTabClick(double mouseX, double mouseY, int button) {
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        if (be == null) {
+            return false;
+        }
+        if (needsTabNav()) {
+            if (button == 0 && inRect(mouseX, mouseY, navLeftRect()) && tabScroll > 0) {
+                tabScroll--;
+                return true;
+            }
+            if (button == 0 && inRect(mouseX, mouseY, navRightRect()) && tabScroll + TAB_VISIBLE_MAX < programs().size()) {
+                tabScroll++;
+                return true;
+            }
+        }
+        if (button == 0 && inRect(mouseX, mouseY, addTabRect())) {
+            sendEdit(8, 0, 0, 0);
+            return true;
+        }
+        int visible = Math.min(TAB_VISIBLE_MAX, programs().size());
+        for (int i = 0; i < visible; i++) {
+            if (!inRect(mouseX, mouseY, tabRect(i))) {
+                continue;
+            }
+            TerminalProgram program = programs().get(tabScroll + i);
+            if (button == 0) {
+                if (program.id != be.getActiveProgramId()) {
+                    be.setActiveProgramIdClient(program.id);
+                    selectedId = -1;
+                    cancelWiring();
+                    sendEdit(10, program.id, 0, 0);
+                }
+                return true;
+            }
+            if (button == 1 && programs().size() > 1) {
+                sendEdit(9, program.id, 0, 0);
+                return true;
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean handleCanvasClick(double mouseX, double mouseY, int button) {
@@ -724,6 +938,21 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
         int y = topPos + CONFIG_Y;
 
         if (selected != null) {
+            Rect2i freqSlot = frequencySlotRect();
+            if (freqSlot != null && inRect(mouseX, mouseY, freqSlot)) {
+                if (button == 0) {
+                    ItemStack carried = Minecraft.getInstance().player == null ? ItemStack.EMPTY
+                            : Minecraft.getInstance().player.containerMenu.getCarried();
+                    if (!carried.isEmpty()) {
+                        sendFrequency(selected.id, carried);
+                    }
+                    return true;
+                }
+                if (button == 1) {
+                    sendFrequency(selected.id, ItemStack.EMPTY);
+                    return true;
+                }
+            }
             if (selected.type.isConfigurable()) {
                 if (button == 0 && inRect(mouseX, mouseY, x + 4, y + 44, 12, 12)) {
                     sendEdit(5, selected.id, selected.config - 1, 0);
@@ -734,7 +963,7 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
                     return true;
                 }
             }
-            if (button == 0 && inRect(mouseX, mouseY, x + 4, y + 64, CONFIG_WIDTH - 8, 12)) {
+            if (button == 0 && inRect(mouseX, mouseY, x + 4, y + CONFIG_HEIGHT - 32, CONFIG_WIDTH - 8, 12)) {
                 selectedId = -1;
                 sendEdit(2, selected.id, 0, 0);
                 return true;
@@ -851,24 +1080,28 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
             return;
         }
 
+        Rect2i add = addTabRect();
+        if (inRect(mouseX, mouseY, add)) {
+            graphics.renderComponentTooltip(font, List.of(Component.translatable("cnmcore.wrt.tab.new")), mouseX, mouseY);
+            return;
+        }
+
         CircuitNode node = inCanvas(mouseX, mouseY) ? nodeAt(mouseX, mouseY) : null;
         if (node != null) {
             List<Component> lines = new ArrayList<>();
             lines.add(Component.translatable("cnmcore.wrt.node." + node.type.name().toLowerCase()));
-            if (node.type == NodeType.W_IN || node.type == NodeType.W_OUT) {
-                WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
-                if (be != null) {
-                    boolean rx = node.type == NodeType.W_IN;
-                    var first = be.frequencySlots.getStackInSlot(rx ? WirelessRedstoneControlTerminalBlockEntity.SLOT_RX_FIRST
-                            : WirelessRedstoneControlTerminalBlockEntity.SLOT_TX_FIRST);
-                    var second = be.frequencySlots.getStackInSlot(rx ? WirelessRedstoneControlTerminalBlockEntity.SLOT_RX_SECOND
-                            : WirelessRedstoneControlTerminalBlockEntity.SLOT_TX_SECOND);
-                    lines.add(Component.translatable("cnmcore.wrt.freq",
-                            first.isEmpty() ? Component.translatable("cnmcore.wrt.freq.empty") : first.getHoverName(),
-                            second.isEmpty() ? Component.translatable("cnmcore.wrt.freq.empty") : second.getHoverName()));
-                }
+            if (node.type.isWireless()) {
+                lines.add(Component.translatable("cnmcore.wrt.freq",
+                        node.frequency.isEmpty() ? Component.translatable("cnmcore.wrt.freq.empty") : node.frequency.getHoverName()));
             }
             graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
+            return;
+        }
+
+        // Hint for the ghost frequency slot in the config panel
+        Rect2i freqSlot = frequencySlotRect();
+        if (freqSlot != null && inRect(mouseX, mouseY, freqSlot)) {
+            graphics.renderComponentTooltip(font, List.of(Component.translatable("cnmcore.wrt.note.freq")), mouseX, mouseY);
         }
     }
 
@@ -897,6 +1130,23 @@ public class WirelessRedstoneControlTerminalScreen extends AbstractContainerScre
         if (be == null) {
             return;
         }
-        PacketDistributor.sendToServer(new TerminalEditPayload(be.getBlockPos(), action, a, b, c));
+        PacketDistributor.sendToServer(new TerminalEditPayload(be.getBlockPos(), be.getActiveProgramId(), action, a, b, c));
+    }
+
+    /** Sets the selected wireless node's ghost frequency. Used by config panel clicks and JEI ghost drag. */
+    public void sendFrequency(int nodeId, ItemStack stack) {
+        WirelessRedstoneControlTerminalBlockEntity be = blockEntity();
+        if (be == null) {
+            return;
+        }
+        PacketDistributor.sendToServer(new TerminalFrequencyPayload(be.getBlockPos(), be.getActiveProgramId(),
+                nodeId, stack.copyWithCount(1)));
+    }
+
+    /** Entry point for the JEI ghost ingredient handler. */
+    public void jeiSetFrequency(ItemStack stack) {
+        if (selectedId >= 0) {
+            sendFrequency(selectedId, stack);
+        }
     }
 }

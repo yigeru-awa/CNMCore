@@ -87,6 +87,11 @@ public enum NodeType {
         };
     }
 
+    /** Whether the node participates in Create's wireless Redstone Link network with its own frequency. */
+    public boolean isWireless() {
+        return this == W_IN || this == W_OUT;
+    }
+
     /** Whether the node's value is driven by the block entity (redstone / wireless read) instead of the simulator. */
     public boolean isExternalSource() {
         return this == INPUT || this == W_IN;

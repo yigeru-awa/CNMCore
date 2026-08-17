@@ -1,9 +1,11 @@
 package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circuit;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Arrays;
 
@@ -21,6 +23,8 @@ public class CircuitNode {
     public int[] inputs = new int[0];
     /** Custom wire waypoints per input port, each packed as {@code (x << 8) | y}, null when the wire is straight. */
     public int[][] waypoints = new int[0][];
+    /** Own wireless frequency for W_IN / W_OUT nodes. A ghost reference, never a physical item. */
+    public ItemStack frequency = ItemStack.EMPTY;
     /** Current output signal strength (0-15). */
     public int value;
 
@@ -180,7 +184,7 @@ public class CircuitNode {
         };
     }
 
-    public CompoundTag save() {
+    public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("id", id);
         tag.putString("type", type.name());
@@ -188,6 +192,9 @@ public class CircuitNode {
         tag.putInt("y", y);
         tag.putInt("cfg", config);
         tag.putIntArray("in", inputs);
+        if (!frequency.isEmpty()) {
+            tag.put("freq", frequency.save(registries));
+        }
         boolean hasWaypoints = false;
         ListTag waypointList = new ListTag();
         for (int i = 0; i < inputs.length; i++) {
@@ -201,11 +208,12 @@ public class CircuitNode {
         return tag;
     }
 
-    public void load(CompoundTag tag) {
+    public void load(HolderLookup.Provider registries, CompoundTag tag) {
         this.x = tag.getInt("x");
         this.y = tag.getInt("y");
         this.config = tag.getInt("cfg");
         resizeInputs();
+        this.frequency = ItemStack.parseOptional(registries, tag.getCompound("freq"));
         int[] saved = tag.getIntArray("in");
         for (int i = 0; i < saved.length && i < inputs.length; i++) {
             inputs[i] = saved[i];

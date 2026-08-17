@@ -35,8 +35,10 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.hint", "Select a node");
         generateLang("cnmcore.wrt.clear", "Clear");
         generateLang("cnmcore.wrt.delete", "Delete");
-        generateLang("cnmcore.wrt.freq", "Frequency: %s + %s");
+        generateLang("cnmcore.wrt.tab.new", "New program");
+        generateLang("cnmcore.wrt.freq", "Frequency: %s");
         generateLang("cnmcore.wrt.freq.empty", "Empty");
+        generateLang("cnmcore.wrt.note.freq", "Click with a held item to copy it, right-click to clear, or drag an item in from JEI");
         generateLang("cnmcore.wrt.cfg.input_count", "Inputs");
         generateLang("cnmcore.wrt.cfg.pulse_width", "Width (tick)");
         generateLang("cnmcore.wrt.cfg.period", "Period (tick)");
@@ -55,8 +57,6 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.side.4", "South");
         generateLang("cnmcore.wrt.side.5", "West");
         generateLang("cnmcore.wrt.side.6", "East");
-        generateLang("cnmcore.wrt.note.rx", "Receiving band slots");
-        generateLang("cnmcore.wrt.note.tx", "Transmitting band slots");
         generateLang("cnmcore.wrt.note.passthrough", "Passes input through");
         generateLang("cnmcore.wrt.note.latch", "IN1: SET, IN2: RESET");
 
@@ -89,11 +89,11 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.node.input", "Redstone Input");
         generateLang("cnmcore.wrt.node.input.desc", "Reads the redstone signal feeding the block");
         generateLang("cnmcore.wrt.node.w_in", "Wireless Input");
-        generateLang("cnmcore.wrt.node.w_in.desc", "Listens to the receiving frequency band");
+        generateLang("cnmcore.wrt.node.w_in.desc", "Listens to its own wireless frequency");
         generateLang("cnmcore.wrt.node.output", "Redstone Output");
         generateLang("cnmcore.wrt.node.output.desc", "Emits a redstone signal to adjacent blocks");
         generateLang("cnmcore.wrt.node.w_out", "Wireless Output");
-        generateLang("cnmcore.wrt.node.w_out.desc", "Transmits on the transmitting frequency band");
+        generateLang("cnmcore.wrt.node.w_out.desc", "Transmits on its own wireless frequency");
         generateLang("cnmcore.wrt.node.const", "Constant");
         generateLang("cnmcore.wrt.node.const.desc", "Emits a fixed signal strength");
     }
@@ -112,8 +112,10 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.hint", "选择一个节点");
         generateLang("cnmcore.wrt.clear", "清空");
         generateLang("cnmcore.wrt.delete", "删除");
-        generateLang("cnmcore.wrt.freq", "频段: %s + %s");
+        generateLang("cnmcore.wrt.tab.new", "新建程序");
+        generateLang("cnmcore.wrt.freq", "频段: %s");
         generateLang("cnmcore.wrt.freq.empty", "空");
+        generateLang("cnmcore.wrt.note.freq", "手持物品左键点击复制，右键清空，或直接从 JEI 拖入");
         generateLang("cnmcore.wrt.cfg.input_count", "输入数");
         generateLang("cnmcore.wrt.cfg.pulse_width", "脉宽 (tick)");
         generateLang("cnmcore.wrt.cfg.period", "周期 (tick)");
@@ -132,8 +134,6 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.side.4", "南");
         generateLang("cnmcore.wrt.side.5", "西");
         generateLang("cnmcore.wrt.side.6", "东");
-        generateLang("cnmcore.wrt.note.rx", "使用上方接收频段槽位");
-        generateLang("cnmcore.wrt.note.tx", "使用上方发射频段槽位");
         generateLang("cnmcore.wrt.note.passthrough", "直通输入信号");
         generateLang("cnmcore.wrt.note.latch", "输入1: 置位, 输入2: 复位");
 
@@ -166,11 +166,11 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.node.input", "红石输入");
         generateLang("cnmcore.wrt.node.input.desc", "读取输入方块的红石信号强度");
         generateLang("cnmcore.wrt.node.w_in", "无线输入");
-        generateLang("cnmcore.wrt.node.w_in.desc", "监听接收频段的无线红石信号");
+        generateLang("cnmcore.wrt.node.w_in.desc", "监听自己专属频段的无线红石信号");
         generateLang("cnmcore.wrt.node.output", "红石输出");
         generateLang("cnmcore.wrt.node.output.desc", "输出红石信号到相邻方块");
         generateLang("cnmcore.wrt.node.w_out", "无线输出");
-        generateLang("cnmcore.wrt.node.w_out.desc", "通过发射频段发送无线红石信号");
+        generateLang("cnmcore.wrt.node.w_out.desc", "通过自己专属的频段发送无线红石信号");
         generateLang("cnmcore.wrt.node.const", "常量");
         generateLang("cnmcore.wrt.node.const.desc", "输出固定的信号强度");
     }

@@ -9,33 +9,21 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Container for the wireless redstone control terminal.
- * Slots 0-3 hold the two Redstone Link frequency pairs (receiving first/second, transmitting first/second).
+ * It holds no terminal slots of its own: wireless frequencies are ghost references set from
+ * the GUI (JEI drag or click with a held item) and can never be consumed or extracted.
  */
 public class WirelessRedstoneControlTerminalMenu extends AbstractContainerMenu {
-    public static final int FREQUENCY_SLOT_COUNT = 4;
     @Nullable
     public final WirelessRedstoneControlTerminalBlockEntity blockEntity;
-    private final ItemStackHandler dummyHandler = new ItemStackHandler(FREQUENCY_SLOT_COUNT);
 
     public WirelessRedstoneControlTerminalMenu(int containerId, Inventory playerInventory,
             @Nullable WirelessRedstoneControlTerminalBlockEntity blockEntity) {
         super(TerminalRegistry.TERMINAL_MENU.get(), containerId);
         this.blockEntity = blockEntity;
-
-        IItemHandler handler = blockEntity != null ? blockEntity.frequencySlots : dummyHandler;
-        // Receiving band
-        addSlot(new SlotItemHandler(handler, WirelessRedstoneControlTerminalBlockEntity.SLOT_RX_FIRST, 8, 8));
-        addSlot(new SlotItemHandler(handler, WirelessRedstoneControlTerminalBlockEntity.SLOT_RX_SECOND, 26, 8));
-        // Transmitting band
-        addSlot(new SlotItemHandler(handler, WirelessRedstoneControlTerminalBlockEntity.SLOT_TX_FIRST, 64, 8));
-        addSlot(new SlotItemHandler(handler, WirelessRedstoneControlTerminalBlockEntity.SLOT_TX_SECOND, 82, 8));
 
         int inventoryX = 62;
         int inventoryY = 158;
@@ -58,36 +46,8 @@ public class WirelessRedstoneControlTerminalMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack result = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
-            ItemStack stack = slot.getItem();
-            result = stack.copy();
-            if (index < FREQUENCY_SLOT_COUNT) {
-                if (!this.moveItemStackTo(stack, FREQUENCY_SLOT_COUNT, this.slots.size(), true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else {
-                // Try to place into a free frequency slot, one item at a time
-                ItemStack single = stack.copyWithCount(1);
-                if (this.moveItemStackTo(single, 0, FREQUENCY_SLOT_COUNT, false)) {
-                    stack.shrink(1);
-                    slot.setChanged();
-                    if (stack.isEmpty()) {
-                        return result;
-                    }
-                }
-                if (!this.moveItemStackTo(stack, FREQUENCY_SLOT_COUNT, this.slots.size(), true)) {
-                    return ItemStack.EMPTY;
-                }
-            }
-            if (stack.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
-            }
-        }
-        return result;
+        // Only player inventory slots exist; nothing to move into the terminal
+        return ItemStack.EMPTY;
     }
 
     @Override

@@ -13,15 +13,17 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Client -> server circuit edit request.
+ * Client -> server terminal edit request, targeting one program (tab).
  * Actions: 0=add(type,x,y), 1=move(id,x,y), 2=remove(id), 3=connect(target,port,source),
- * 4=disconnect(target,port), 5=setConfig(id,value), 6=clear.
+ * 4=disconnect(target,port), 5=setConfig(id,value), 6=clear, 7=addWaypoint(target,port,packed),
+ * 8=createProgram, 9=deleteProgram(id), 10=switchProgram(id).
  */
-public record TerminalEditPayload(BlockPos pos, int action, int a, int b, int c) implements CustomPacketPayload {
+public record TerminalEditPayload(BlockPos pos, int program, int action, int a, int b, int c) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<TerminalEditPayload> TYPE =
             new CustomPacketPayload.Type<>(CNMCore.asResource("wrt_edit"));
     public static final StreamCodec<ByteBuf, TerminalEditPayload> CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, TerminalEditPayload::pos,
+            ByteBufCodecs.VAR_INT, TerminalEditPayload::program,
             ByteBufCodecs.VAR_INT, TerminalEditPayload::action,
             ByteBufCodecs.VAR_INT, TerminalEditPayload::a,
             ByteBufCodecs.VAR_INT, TerminalEditPayload::b,
@@ -44,7 +46,7 @@ public record TerminalEditPayload(BlockPos pos, int action, int a, int b, int c)
             if (player.distanceToSqr(Vec3.atCenterOf(payload.pos())) > 64.0D) {
                 return;
             }
-            terminal.handleEdit(payload.action(), payload.a(), payload.b(), payload.c());
+            terminal.handleEdit(payload.program(), payload.action(), payload.a(), payload.b(), payload.c());
         });
     }
 }

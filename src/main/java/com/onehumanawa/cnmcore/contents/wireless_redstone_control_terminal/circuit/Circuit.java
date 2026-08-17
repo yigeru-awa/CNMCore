@@ -1,5 +1,6 @@
 package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circuit;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -167,18 +168,18 @@ public class Circuit {
         }
     }
 
-    public CompoundTag save() {
+    public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("nextId", nextId);
         ListTag list = new ListTag();
         for (CircuitNode node : nodes) {
-            list.add(node.save());
+            list.add(node.save(registries));
         }
         tag.put("nodes", list);
         return tag;
     }
 
-    public void load(CompoundTag tag) {
+    public void load(HolderLookup.Provider registries, CompoundTag tag) {
         nodes.clear();
         byId.clear();
         nextId = tag.getInt("nextId");
@@ -192,7 +193,7 @@ public class Circuit {
                 continue;
             }
             CircuitNode node = new CircuitNode(nodeTag.getInt("id"), type, 0, 0);
-            node.load(nodeTag);
+            node.load(registries, nodeTag);
             nodes.add(node);
             byId.put(node.id, node);
         }

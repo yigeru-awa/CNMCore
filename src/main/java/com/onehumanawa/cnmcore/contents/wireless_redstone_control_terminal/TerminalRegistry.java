@@ -2,6 +2,7 @@ package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal;
 
 import com.onehumanawa.cnmcore.CNMCore;
 import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.network.TerminalEditPayload;
+import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.network.TerminalFrequencyPayload;
 import com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.network.TerminalSyncPayload;
 import com.onehumanawa.cnmcore.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -55,8 +56,9 @@ public class TerminalRegistry {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+        PayloadRegistrar registrar = event.registrar("2");
         registrar.playToServer(TerminalEditPayload.TYPE, TerminalEditPayload.CODEC, TerminalEditPayload::handle);
+        registrar.playToServer(TerminalFrequencyPayload.TYPE, TerminalFrequencyPayload.CODEC, TerminalFrequencyPayload::handle);
         registrar.playToClient(TerminalSyncPayload.TYPE, TerminalSyncPayload.CODEC, TerminalSyncPayload::handle);
     }
 }
