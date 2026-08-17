@@ -156,10 +156,21 @@ dependencies {
     // Create Connected
     implementation("curse.maven:create-connected-947914:8299240")
 
+    // FTB Series
+    implementation("curse.maven:ftb-library-forge-404465:8569579")
+    implementation("curse.maven:ftb-quests-forge-289412:8648333")
+
+    // Modern UI
+    implementation("curse.maven:modern-ui-352491:8206075")
+
     // RUNTIME: Optimization
     runtimeOnly("curse.maven:sodium-394468:8591792")
     runtimeOnly("curse.maven:imblocker-483760:8167852")
     runtimeOnly("curse.maven:just-enough-characters-250702:8541967")
+    runtimeOnly("curse.maven:jade-324717:8651070")
+
+    // RUNTIME: Utilities
+    runtimeOnly("curse.maven:huge-structure-blocks-474114:7065481")
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
