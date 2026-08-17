@@ -1,0 +1,206 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.144'
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    mavenLocal()
+
+    // Create, Ponder, Flywheel
+    maven { url = "https://maven.createmod.net" }
+
+    // Registrate
+    maven { url = "https://maven.ithundxr.dev/snapshots" }
+
+    // LDLib, MBD2 - FirstDark
+    maven { url = "https://maven.firstdark.dev/snapshots" }
+    maven { url = "https://maven.firstdarkdev.xyz/snapshots" }
+
+    // JEI / ModMaven
+    maven { url = "https://modmaven.dev" }
+    maven { url = "https://modmaven.dev/" }
+    maven { url = "https://maven.blamejared.com/" }
+    maven { url = "https://maven.blamejared.com" }
+
+    // EMI
+    maven { url = "https://repo.sleeping.town/" }
+
+    // Tterrag Maven (Registrate, etc.)
+    maven { url = 'https://maven.tterrag.com/' }
+
+    // Illusive Soulworks (Curios API, etc.)
+    maven { name = "Illusive Soulworks maven"; url = "https://maven.theillusivec4.top/" }
+
+    // CurseForge
+    exclusiveContent {
+        forRepository {
+            maven {
+                url "https://cursemaven.com"
+            }
+        }
+        filter {
+            includeGroup "curse.maven"
+        }
+    }
+
+    // Modrinth
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
+
+    // DVS1 Maven (JEI/MEK)
+    maven { name 'DVS1 Maven FS'; url 'https://dvs1.progwml6.com/files/maven' }
+
+    // MinecraftForge
+    maven { url = 'https://maven.minecraftforge.net/' }
+
+    // GeckoLib
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content {
+            includeGroupByRegex("software\\.bernie.*")
+            includeGroup("com.eliotlash.mclib")
+        }
+    }
+
+    // Lirxowo (reposilite)
+    maven {
+        name = "reposiliteRepositoryReleases"
+        url = uri("https://maven.lirxowo.com/releases")
+    }
+
+    // Fuzss ModResources
+    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
+
+    // Architectury
+    maven { url = 'https://maven.architectury.dev/'; name = 'Architectury' }
+
+    // Latvian Mods (KubeJS, Rhino)
+    maven { url = 'https://maven.latvian.dev/releases'; name = 'Latvian Mods (KubeJS, Rhino)' }
+}
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    // Create
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
+    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    // Just Enough Items
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+
+    // LDLib
+    implementation("curse.maven:ldlib-626676:8623935")
+
+    // Create Connected
+    implementation("curse.maven:create-connected-947914:8299240")
+
+    // RUNTIME: Optimization
+    runtimeOnly("curse.maven:sodium-394468:8591792")
+    runtimeOnly("curse.maven:imblocker-483760:8167852")
+    runtimeOnly("curse.maven:just-enough-characters-250702:8541967")
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
