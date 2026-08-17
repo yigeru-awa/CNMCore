@@ -156,9 +156,13 @@ dependencies {
     // Create Connected
     implementation("curse.maven:create-connected-947914:8299240")
 
+    // Architectury API
+    implementation("curse.maven:architectury-api-419699:8492726")
+
     // FTB Series
     implementation("curse.maven:ftb-library-forge-404465:8569579")
     implementation("curse.maven:ftb-quests-forge-289412:8648333")
+    implementation("curse.maven:ftb-teams-forge-404468:7878281")
 
     // Modern UI
     implementation("curse.maven:modern-ui-352491:8206075")
@@ -167,7 +171,7 @@ dependencies {
     runtimeOnly("curse.maven:sodium-394468:8591792")
     runtimeOnly("curse.maven:imblocker-483760:8167852")
     runtimeOnly("curse.maven:just-enough-characters-250702:8541967")
-    runtimeOnly("curse.maven:jade-324717:8651070")
+    runtimeOnly("curse.maven:jade-324717:8591319")
 
     // RUNTIME: Utilities
     runtimeOnly("curse.maven:huge-structure-blocks-474114:7065481")
