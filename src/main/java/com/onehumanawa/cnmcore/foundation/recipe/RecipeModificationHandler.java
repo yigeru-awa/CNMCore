@@ -2,6 +2,7 @@ package com.onehumanawa.cnmcore.foundation.recipe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +32,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 
 import com.onehumanawa.cnmcore.CNMCore;
+import com.onehumanawa.cnmcore.foundation.data.recipe.KubeJavaDatagenSupport;
 
 /**
  * Engine for modpack-wide recipe control. Declarative configuration lives in
@@ -107,7 +109,8 @@ public class RecipeModificationHandler {
                                        HolderLookup.Provider registries) {
         recipeManager = manager;
         resourceManager = resources;
-        if (FILTERS.isEmpty())
+        Map<ResourceLocation, JsonObject> added = KubeJavaDatagenSupport.getAddedRecipes();
+        if (FILTERS.isEmpty() && added.isEmpty())
             return;
 
         RegistryOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
@@ -115,7 +118,7 @@ public class RecipeModificationHandler {
         Map<net.minecraft.world.item.crafting.RecipeType<?>, ResourceLocation> typeIds = new HashMap<>();
         typeLookup.listElements().forEach(holder -> typeIds.put(holder.value(), holder.key().location()));
 
-        List<RecipeHolder<?>> result = new ArrayList<>();
+        Map<ResourceLocation, RecipeHolder<?>> result = new LinkedHashMap<>();
         int removedCount = 0;
         int modifiedCount = 0;
 
@@ -143,7 +146,7 @@ public class RecipeModificationHandler {
             }
 
             if (matched.isEmpty()) {
-                result.add(holder);
+                result.put(holder.id(), holder);
                 continue;
             }
 
@@ -158,11 +161,25 @@ public class RecipeModificationHandler {
                 modifiedCount++;
                 CNMCore.LOGGER.debug("[Recipe] Modified recipe {}", holder.id());
             }
-            result.add(modified);
+            result.put(modified.id(), modified);
         }
 
-        manager.replaceRecipes(result);
-        CNMCore.LOGGER.info("[Recipe] Processing done: {} removed, {} modified", removedCount, modifiedCount);
+        int addedCount = 0;
+        for (Map.Entry<ResourceLocation, JsonObject> entry : added.entrySet()) {
+            Optional<net.minecraft.world.item.crafting.Recipe<?>> recipe = Recipe.CODEC.parse(ops, entry.getValue())
+                    .result();
+            if (recipe.isEmpty()) {
+                CNMCore.LOGGER.warn("[Recipe] Failed to parse added recipe {}", entry.getKey());
+                continue;
+            }
+            result.put(entry.getKey(), new RecipeHolder<>(entry.getKey(), recipe.get()));
+            addedCount++;
+            CNMCore.LOGGER.info("[Recipe] Added recipe {}", entry.getKey());
+        }
+
+        manager.replaceRecipes(result.values());
+        CNMCore.LOGGER.info("[Recipe] Processing done: {} removed, {} modified, {} added",
+                removedCount, modifiedCount, addedCount);
     }
 
     private static RecipeHolder<?> tryModify(RecipeHolder<?> holder, ResourceManager resources,
@@ -182,9 +199,9 @@ public class RecipeModificationHandler {
 
         boolean changed = false;
         if (!inputReplacements.isEmpty())
-            changed |= replaceScoped(json, INPUT_SCOPES, inputReplacements);
+            changed |= replaceScoped(json, INPUT_SCOPES, inputReplacements, true);
         if (!outputReplacements.isEmpty())
-            changed |= replaceScoped(json, OUTPUT_SCOPES, outputReplacements);
+            changed |= replaceScoped(json, OUTPUT_SCOPES, outputReplacements, false);
         for (Consumer<JsonObject> transformer : transformers) {
             transformer.accept(json);
             changed = true;
@@ -209,26 +226,34 @@ public class RecipeModificationHandler {
     private static final Set<String> INPUT_SCOPES = Set.of("ingredient", "ingredients");
     private static final Set<String> OUTPUT_SCOPES = Set.of("result", "results");
 
-    private static boolean replaceScoped(JsonObject root, Set<String> scopes, Map<String, String> replacements) {
+    /**
+     * Replaces item ids inside a scope subtree. {@code ingredientContext} is
+     * {@code true} for inputs and {@code false} for result stacks: plain ids
+     * are set as-is, while specs with components ({@link ItemSpec}) become a
+     * NeoForge component ingredient on inputs and a {@code components} field
+     * on result stacks.
+     */
+    private static boolean replaceScoped(JsonObject root, Set<String> scopes, Map<String, String> replacements,
+                                         boolean ingredientContext) {
         boolean changed = false;
         for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
             if (scopes.contains(entry.getKey())) {
-                changed |= replaceItemIds(entry.getValue(), replacements);
+                changed |= replaceItemIds(entry.getValue(), replacements, ingredientContext);
             } else {
-                changed |= replaceScopedDeep(entry.getValue(), scopes, replacements);
+                changed |= replaceScopedDeep(entry.getValue(), scopes, replacements, ingredientContext);
             }
         }
         return changed;
     }
 
     private static boolean replaceScopedDeep(JsonElement element, Set<String> scopes,
-                                             Map<String, String> replacements) {
+                                             Map<String, String> replacements, boolean ingredientContext) {
         boolean changed = false;
         if (element.isJsonObject()) {
-            changed |= replaceScoped(element.getAsJsonObject(), scopes, replacements);
+            changed |= replaceScoped(element.getAsJsonObject(), scopes, replacements, ingredientContext);
         } else if (element.isJsonArray()) {
             for (JsonElement e : element.getAsJsonArray())
-                changed |= replaceScopedDeep(e, scopes, replacements);
+                changed |= replaceScopedDeep(e, scopes, replacements, ingredientContext);
         }
         return changed;
     }
@@ -236,9 +261,11 @@ public class RecipeModificationHandler {
     /**
      * Replaces item ids inside an ingredient or result subtree. Handles both
      * single-item objects ({@code {"item": "..."}} / {@code {"id": "..."}})
-     * and plain string arrays.
+     * and plain string arrays. Replacement values may be encoded specs from
+     * {@link ItemSpec#of(String, String)} carrying data components.
      */
-    private static boolean replaceItemIds(JsonElement element, Map<String, String> replacements) {
+    private static boolean replaceItemIds(JsonElement element, Map<String, String> replacements,
+                                          boolean ingredientContext) {
         boolean changed = false;
         if (element.isJsonArray()) {
             var array = element.getAsJsonArray();
@@ -247,11 +274,17 @@ public class RecipeModificationHandler {
                 if (e.isJsonPrimitive()) {
                     String mapped = replacements.get(e.getAsString());
                     if (mapped != null) {
-                        array.set(i, new JsonPrimitive(mapped));
+                        ItemSpec.Decoded decoded = ItemSpec.decode(mapped);
+                        if (decoded.components() == null)
+                            array.set(i, new JsonPrimitive(decoded.id()));
+                        else if (ingredientContext)
+                            array.set(i, ItemSpec.ingredientJson(mapped));
+                        else
+                            array.set(i, ItemSpec.stackJson(mapped, 1));
                         changed = true;
                     }
                 } else {
-                    changed |= replaceItemIds(e, replacements);
+                    changed |= replaceItemIds(e, replacements, ingredientContext);
                 }
             }
         } else if (element.isJsonObject()) {
@@ -261,13 +294,25 @@ public class RecipeModificationHandler {
                 if (value != null && value.isJsonPrimitive()) {
                     String mapped = replacements.get(value.getAsString());
                     if (mapped != null) {
-                        obj.addProperty(field, mapped);
+                        ItemSpec.Decoded decoded = ItemSpec.decode(mapped);
+                        if (decoded.components() == null) {
+                            obj.addProperty(field, decoded.id());
+                        } else if (ingredientContext) {
+                            // replace the whole ingredient entry with a component ingredient
+                            JsonObject replacement = ItemSpec.ingredientJson(mapped);
+                            obj.entrySet().clear();
+                            for (Map.Entry<String, JsonElement> e : replacement.entrySet())
+                                obj.add(e.getKey(), e.getValue());
+                        } else {
+                            obj.addProperty(field, decoded.id());
+                            obj.add("components", decoded.components());
+                        }
                         changed = true;
                     }
                 }
             }
             for (Map.Entry<String, JsonElement> entry : obj.entrySet())
-                changed |= replaceItemIds(entry.getValue(), replacements);
+                changed |= replaceItemIds(entry.getValue(), replacements, ingredientContext);
         }
         return changed;
     }

@@ -2,11 +2,16 @@ package com.onehumanawa.cnmcore.foundation.recipe;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import com.onehumanawa.cnmcore.foundation.data.recipe.KubeJavaDatagenSupport;
 
 /**
  * ====================================================================
@@ -56,6 +61,16 @@ import com.google.gson.JsonObject;
  *   <li>{@link RecipeFilter#remove()} - delete all matched recipes</li>
  * </ul>
  *
+ * <h2>Recipe addition</h2>
+ * {@code addRecipe} injects raw JSON (any registered type), {@code addShaped}/
+ * {@code addShapeless} cover the crafting table, {@code addSmelting}/
+ * {@code addBlasting}/{@code addSmoking}/{@code addCampfireCooking}/
+ * {@code addStonecutting} cover vanilla heat and cutting recipes,
+ * {@code addCreateMixing}/{@code addCreateProcessing}/{@code addMechanicalCrafting}
+ * cover Create machines, and {@code addBrewing} covers the brewing stand.
+ * Added recipes persist across {@code /reload} and sync to clients; an added
+ * recipe whose id already exists overrides the original.
+ *
  * <h2>Examples</h2>
  * <pre>{@code
  * // 1. Remove a single recipe
@@ -97,12 +112,6 @@ public final class KubeJavaRecipeModifier {
      * {@link RecipeModificationHandler} loads. Declare all recipe changes here.
      */
     public static void init() {
-        byId("create:mechanical_crafting/crushing_wheel").remove();
-        // replaceInput("minecraft:iron_ingot", "create:iron_sheet");
-        // replaceOutput("minecraft:chest", "create:cardboard_package");
-        // removeRecipe("minecraft:chest");
-        // byMod("create").replaceInput("minecraft:iron_ingot", "create:iron_sheet");
-        // byType("create:mixing").modify(json -> json.addProperty("processingTime", 200));
     }
 
     // ------------------------------------------------------------------
@@ -138,6 +147,327 @@ public final class KubeJavaRecipeModifier {
      */
     public static void removeRecipe(String recipeId) {
         byId(recipeId).remove();
+    }
+
+    // ------------------------------------------------------------------
+    // Recipe addition (backed by KubeJavaDatagenSupport)
+    // ------------------------------------------------------------------
+
+    /**
+     * Adds a fully custom recipe with raw JSON. The JSON must contain a valid
+     * {@code "type"} field; any registered recipe type of the modpack works,
+     * vanilla or modded. Recipes are injected on server start and
+     * {@code /reload}, and synced to clients automatically.
+     *
+     * @param id   recipe id; without a namespace it defaults to {@code cnmcore}
+     * @param json full recipe JSON object
+     */
+    public static void addRecipe(String id, JsonObject json) {
+        KubeJavaDatagenSupport.addRecipe(id, json);
+    }
+
+    /**
+     * Adds a fully custom recipe with raw JSON text.
+     *
+     * @param id       recipe id
+     * @param jsonText recipe JSON, e.g. {@code "{\"type\":\"create:mixing\",...}"}
+     * @see #addRecipe(String, JsonObject)
+     */
+    public static void addRecipe(String id, String jsonText) {
+        addRecipe(id, JsonParser.parseString(jsonText).getAsJsonObject());
+    }
+
+    /**
+     * Adds a 3x3 crafting table recipe with a pattern.
+     *
+     * @param id      recipe id
+     * @param pattern rows, e.g. {@code {"AAA", " B ", " B "}}; space = empty slot
+     * @param key     single-letter symbol to ingredient spec, e.g.
+     *                {@code Map.of("A", "minecraft:iron_ingot", "B", "#minecraft:planks")}
+     * @param result  result item id
+     */
+    public static void addShaped(String id, String[] pattern, Map<String, String> key, String result) {
+        addShaped(id, pattern, key, result, 1);
+    }
+
+    /**
+     * Adds a 3x3 crafting table recipe with a pattern and output count.
+     *
+     * @see #addShaped(String, String[], Map, String)
+     */
+    public static void addShaped(String id, String[] pattern, Map<String, String> key, String result, int count) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:crafting_shaped");
+        JsonArray patternArray = new JsonArray();
+        for (String row : pattern)
+            patternArray.add(row);
+        json.add("pattern", patternArray);
+        JsonObject keyObject = new JsonObject();
+        key.forEach((symbol, spec) -> keyObject.add(symbol, ingredient(spec)));
+        json.add("key", keyObject);
+        json.add("result", itemStack(result, count));
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a shapeless crafting table recipe.
+     *
+     * @param id          recipe id
+     * @param ingredients ingredient specs (item ids or {@code "#modid:tag"})
+     * @param result      result item id
+     */
+    public static void addShapeless(String id, String[] ingredients, String result) {
+        addShapeless(id, ingredients, result, 1);
+    }
+
+    /**
+     * Adds a shapeless crafting table recipe with output count.
+     *
+     * @see #addShapeless(String, String[], String)
+     */
+    public static void addShapeless(String id, String[] ingredients, String result, int count) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:crafting_shapeless");
+        JsonArray array = new JsonArray();
+        for (String spec : ingredients)
+            array.add(ingredient(spec));
+        json.add("ingredients", array);
+        json.add("result", itemStack(result, count));
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a furnace recipe (200 ticks, 0.35 XP by default).
+     *
+     * @param id     recipe id
+     * @param input  ingredient spec
+     * @param result result item id
+     */
+    public static void addSmelting(String id, String input, String result) {
+        addSmelting(id, input, result, 0.35F, 200);
+    }
+
+    /**
+     * Adds a furnace recipe with explicit experience and cooking time.
+     *
+     * @see #addSmelting(String, String, String)
+     */
+    public static void addSmelting(String id, String input, String result, float experience, int cookingTime) {
+        addCooking("minecraft:smelting", id, input, result, experience, cookingTime);
+    }
+
+    /** Adds a blast furnace recipe (100 ticks, 1.0 XP by default). */
+    public static void addBlasting(String id, String input, String result) {
+        addBlasting(id, input, result, 1.0F, 100);
+    }
+
+    /** Adds a blast furnace recipe with explicit experience and cooking time. */
+    public static void addBlasting(String id, String input, String result, float experience, int cookingTime) {
+        addCooking("minecraft:blasting", id, input, result, experience, cookingTime);
+    }
+
+    /** Adds a smoker recipe (100 ticks, 0.35 XP by default). */
+    public static void addSmoking(String id, String input, String result) {
+        addSmoking(id, input, result, 0.35F, 100);
+    }
+
+    /** Adds a smoker recipe with explicit experience and cooking time. */
+    public static void addSmoking(String id, String input, String result, float experience, int cookingTime) {
+        addCooking("minecraft:smoking", id, input, result, experience, cookingTime);
+    }
+
+    /** Adds a campfire cooking recipe (600 ticks, 0.35 XP by default). */
+    public static void addCampfireCooking(String id, String input, String result) {
+        addCampfireCooking(id, input, result, 0.35F, 600);
+    }
+
+    /** Adds a campfire cooking recipe with explicit experience and cooking time. */
+    public static void addCampfireCooking(String id, String input, String result, float experience, int cookingTime) {
+        addCooking("minecraft:campfire_cooking", id, input, result, experience, cookingTime);
+    }
+
+    /** Adds a stonecutter recipe with output count 1. */
+    public static void addStonecutting(String id, String input, String result) {
+        addStonecutting(id, input, result, 1);
+    }
+
+    /**
+     * Adds a stonecutter recipe.
+     *
+     * @param count output count, e.g. 2 for slabs from stone
+     */
+    public static void addStonecutting(String id, String input, String result, int count) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "minecraft:stonecutting");
+        json.add("ingredient", ingredient(input));
+        json.add("result", itemStack(result, count));
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Create mechanical crafting recipe (shaped, any size up to 9x9).
+     *
+     * @param id      recipe id
+     * @param pattern rows, e.g. {@code {"AAA", " B ", " B "}}
+     * @param key     single-letter symbol to ingredient spec
+     * @param result  result item id
+     */
+    public static void addMechanicalCrafting(String id, String[] pattern, Map<String, String> key, String result) {
+        addMechanicalCrafting(id, pattern, key, result, 1);
+    }
+
+    /**
+     * Adds a Create mechanical crafting recipe with output count.
+     *
+     * @see #addMechanicalCrafting(String, String[], Map, String)
+     */
+    public static void addMechanicalCrafting(String id, String[] pattern, Map<String, String> key, String result,
+                                             int count) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "create:mechanical_crafting");
+        JsonArray patternArray = new JsonArray();
+        for (String row : pattern)
+            patternArray.add(row);
+        json.add("pattern", patternArray);
+        JsonObject keyObject = new JsonObject();
+        key.forEach((symbol, spec) -> keyObject.add(symbol, ingredient(spec)));
+        json.add("key", keyObject);
+        json.add("result", itemStack(result, count));
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Create mixing recipe.
+     *
+     * @param id      recipe id
+     * @param inputs  ingredient specs
+     * @param outputs result item ids, count 1 each (use {@link #addRecipe} for
+     *                counts, chances or fluid results)
+     */
+    public static void addCreateMixing(String id, String[] inputs, String[] outputs) {
+        addCreateMixing(id, inputs, outputs, -1, null);
+    }
+
+    /**
+     * Adds a Create mixing recipe with processing time and heat requirement.
+     *
+     * @param processingTime ticks, pass -1 for Create's default (100)
+     * @param heatRequirement {@code "none"}, {@code "heated"} or {@code "superheated"}
+     * @see #addCreateMixing(String, String[], String[])
+     */
+    public static void addCreateMixing(String id, String[] inputs, String[] outputs, int processingTime,
+                                       String heatRequirement) {
+        addCreateProcessing("create:mixing", id, inputs, outputs, processingTime, heatRequirement);
+    }
+
+    /**
+     * Adds a Create bulk processing recipe of any type:
+     * {@code create:milling}, {@code create:crushing}, {@code create:splashing}
+     * (washing), {@code create:haunting}, {@code create:compacting},
+     * {@code create:pressing}, ...
+     *
+     * @param type recipe type id, e.g. {@code "create:milling"}
+     * @param id   recipe id
+     * @param inputs  ingredient specs
+     * @param outputs result item ids, count 1 each
+     */
+    public static void addCreateProcessing(String type, String id, String[] inputs, String[] outputs) {
+        addCreateProcessing(type, id, inputs, outputs, -1, null);
+    }
+
+    /**
+     * Adds a Create bulk processing recipe with processing time and heat.
+     *
+     * @see #addCreateProcessing(String, String, String[], String[])
+     */
+    public static void addCreateProcessing(String type, String id, String[] inputs, String[] outputs,
+                                           int processingTime, String heatRequirement) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", type);
+        JsonArray ingredients = new JsonArray();
+        for (String spec : inputs)
+            ingredients.add(ingredient(spec));
+        json.add("ingredients", ingredients);
+        JsonArray results = new JsonArray();
+        for (String spec : outputs) {
+            JsonObject result = new JsonObject();
+            result.addProperty("item", spec);
+            results.add(result);
+        }
+        json.add("results", results);
+        if (processingTime >= 0)
+            json.addProperty("processingTime", processingTime);
+        if (heatRequirement != null)
+            json.addProperty("heatRequirement", heatRequirement);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a brewing stand recipe (item-based, NeoForge extension; potion
+     * output is the input's potion applied to the output container item).
+     * Applied on both client and server.
+     *
+     * @param input      the bottle/potion being modified
+     * @param ingredient the reagent item in the top slot
+     * @param output     the resulting item
+     */
+    public static void addBrewing(String input, String ingredient, String output) {
+        KubeJavaDatagenSupport.addBrewing(input, ingredient, output);
+    }
+
+    // ------------------------------------------------------------------
+    // Item specs with data components
+    // ------------------------------------------------------------------
+
+    /**
+     * Creates an item spec carrying data components, usable anywhere a plain
+     * item id is accepted: as the replacement target of
+     * {@link #replaceInput}/{@link #replaceOutput}, and as ingredient/result
+     * parameters of the {@code add*} builders (including shaped {@code key}
+     * values). Tag specs ({@code "#modid:tag"}) do not support components.
+     * <p>
+     * On inputs the spec becomes a NeoForge component ingredient (partial
+     * match); on results it becomes a stack with a {@code components} field.
+     *
+     * @param id             item id, e.g. {@code "minecraft:diamond_sword"}
+     * @param dataComponent  JSON text of the component map, e.g.
+     *                       {@code "{\"minecraft:enchantments\":{\"levels\":{\"minecraft:sharpness\":5}}}"}
+     * @return encoded item spec, or the plain id when {@code dataComponent}
+     *         is {@code null} or blank
+     */
+    public static String itemOf(String id, String dataComponent) {
+        return ItemSpec.of(id, dataComponent);
+    }
+
+    // ------------------------------------------------------------------
+    // JSON building helpers
+    // ------------------------------------------------------------------
+
+    /** Builds a generic cooking recipe JSON (furnace / blast furnace / smoker / campfire). */
+    private static void addCooking(String type, String id, String input, String result, float experience,
+                                   int cookingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", type);
+        json.add("ingredient", ingredient(input));
+        json.add("result", itemStack(result, 1));
+        json.addProperty("experience", experience);
+        json.addProperty("cookingtime", cookingTime);
+        addRecipe(id, json);
+    }
+
+    /** Builds an ingredient JSON from a spec: {@code "#modid:tag"}, an item id, or an encoded spec from {@link #itemOf(String, String)}. */
+    private static JsonObject ingredient(String spec) {
+        if (spec.startsWith("#")) {
+            JsonObject json = new JsonObject();
+            json.addProperty("tag", spec.substring(1));
+            return json;
+        }
+        return ItemSpec.ingredientJson(spec);
+    }
+
+    /** Builds an item stack JSON from a plain id or encoded spec: {@code {"id": ..., "count": n, "components": {...}}}. */
+    private static JsonObject itemStack(String item, int count) {
+        return ItemSpec.stackJson(item, count);
     }
 
     // ------------------------------------------------------------------
