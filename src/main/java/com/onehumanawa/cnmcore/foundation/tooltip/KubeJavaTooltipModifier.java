@@ -291,7 +291,7 @@ public final class KubeJavaTooltipModifier {
      */
     public static Palette paletteOf(Item item) {
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-        Palette palette = id == null ? null : PALETTES.get(id.toString());
+        Palette palette = PALETTES.get(id.toString());
         return palette != null ? palette : Palette.STANDARD_CREATE;
     }
 
@@ -339,13 +339,9 @@ public final class KubeJavaTooltipModifier {
                 if (!entry.matches(stack)) {
                     continue;
                 }
-                ItemDescription description = CACHE
+                CACHE
                         .computeIfAbsent(entry, e -> Optional.ofNullable(
-                                ItemDescription.create(e.baseKey(), paletteFor(e))))
-                        .orElse(null);
-                if (description != null) {
-                    event.getToolTip().addAll(1, description.getCurrentLines());
-                }
+                                ItemDescription.create(e.baseKey(), paletteFor(e)))).ifPresent(description -> event.getToolTip().addAll(1, description.getCurrentLines()));
             }
         }
     }

@@ -207,7 +207,7 @@ public class SimpleSchematicHandler extends SchematicHandler {
                 continue;
             BlockPos lastKnown = multiBlockEntity.getLastKnownPos();
             BlockPos current = blockEntity.getBlockPos();
-            if (lastKnown == null || current == null)
+            if (lastKnown == null)
                 continue;
             if (multiBlockEntity.isController())
                 continue;

@@ -20,13 +20,12 @@ public class AllDataComponents {
      * Replaces the legacy NBT "File" field from the original CreateSimpleSchematic mod.
      */
     public static final DataComponentType<String> SCHEMATIC_FILE = register(
-            "schematic_file",
             builder -> builder.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8)
     );
 
-    private static <T> DataComponentType<T> register(String name, UnaryOperator<DataComponentType.Builder<T>> builder) {
+    private static <T> DataComponentType<T> register(UnaryOperator<DataComponentType.Builder<T>> builder) {
         DataComponentType<T> type = builder.apply(DataComponentType.builder()).build();
-        DATA_COMPONENTS.register(name, () -> type);
+        DATA_COMPONENTS.register("schematic_file", () -> type);
         return type;
     }
 

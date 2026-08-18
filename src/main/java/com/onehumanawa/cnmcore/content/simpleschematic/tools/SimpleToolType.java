@@ -31,6 +31,7 @@ public enum SimpleToolType {
      * Tools offered by the selection screen. The flip tool is opt-in via config,
      * and the print tool is only offered in creative mode (Create 6 semantics).
      */
+    @SuppressWarnings("unused")
     public static List<ToolType> getTools(boolean creative) {
         List<ToolType> tools = new ArrayList<>(List.of(
                 ToolType.MOVE, ToolType.MOVE_Y, ToolType.DEPLOY, ToolType.ROTATE));

@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
  *     .show(60);
  * }</pre>
  */
+@SuppressWarnings("unused")
 public final class OutlineBuilder {
 
     private final Object slot;

@@ -28,7 +28,7 @@ public class SimpleToolSelectionScreen extends ToolSelectionScreen {
     private void draw(GuiGraphics graphics) {
         PoseStack matrixStack = graphics.pose();
         // Defensive: minecraft/window may theoretically be unavailable while the HUD renders
-        if (minecraft == null || minecraft.getWindow() == null)
+        if (minecraft == null)
             return;
         Window mainWindow = minecraft.getWindow();
         ToolSelectionScreenAccessor accessor = (ToolSelectionScreenAccessor) this;

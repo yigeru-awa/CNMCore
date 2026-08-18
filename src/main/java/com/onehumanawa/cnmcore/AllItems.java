@@ -2,11 +2,11 @@ package com.onehumanawa.cnmcore;
 
 import com.onehumanawa.cnmcore.content.simpleschematic.SimpleSchematicItem;
 import com.onehumanawa.cnmcore.content.redprint.RedprintItem;
-import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import net.minecraft.world.item.Item;
 
+@SuppressWarnings("unused")
 public class AllItems {
     private static final CreateRegistrate REGISTRATE = CNMCore.registrate();
 

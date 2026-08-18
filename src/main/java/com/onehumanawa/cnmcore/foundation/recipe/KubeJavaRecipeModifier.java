@@ -122,6 +122,11 @@ public final class KubeJavaRecipeModifier {
                 "create:crafting/materials/andesite_alloy",
                 "create:crafting/materials/andesite_alloy_from_zinc"
         ).remove();
+        addShapeless(
+                "crafting_shapeless/redprint",
+                new String[]{"create:schematic_and_quill", "minecraft:red_dye"},
+                "cnmcore:redprint"
+        );
     }
 
     // ------------------------------------------------------------------

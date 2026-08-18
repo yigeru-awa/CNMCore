@@ -46,6 +46,7 @@ import com.onehumanawa.cnmcore.foundation.item.ItemSpec;
  * This works for every recipe type, including Create processing recipes.
  * The updated recipe set is synced to clients automatically.
  */
+@SuppressWarnings("unused")
 @EventBusSubscriber(modid = CNMCore.ID)
 public class RecipeModificationHandler {
 

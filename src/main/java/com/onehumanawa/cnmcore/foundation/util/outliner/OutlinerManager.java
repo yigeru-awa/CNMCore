@@ -3,7 +3,6 @@ package com.onehumanawa.cnmcore.foundation.util.outliner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +23,7 @@ import java.util.Optional;
  * OutlinerManager.get().clear("target");
  * }</pre>
  */
+@SuppressWarnings("unused")
 public final class OutlinerManager {
 
     private static final OutlinerManager INSTANCE = new OutlinerManager();
