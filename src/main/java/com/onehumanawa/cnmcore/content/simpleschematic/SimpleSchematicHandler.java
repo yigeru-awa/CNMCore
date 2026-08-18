@@ -48,12 +48,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- * Client-side handler driving deploy/transform/print interactions for the
- * {@link SimpleSchematicItem}. Unlike Create's handler, the schematic is loaded
- * directly from the local schematics folder, so no server sync is required.
- */
 public class SimpleSchematicHandler extends SchematicHandler {
 
     public static final SimpleSchematicHandler SIMPLE_SCHEMATIC_HANDLER = new SimpleSchematicHandler();

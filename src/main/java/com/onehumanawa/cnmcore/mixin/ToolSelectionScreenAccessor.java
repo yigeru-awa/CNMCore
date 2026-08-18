@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Accessor for Create's {@link ToolSelectionScreen} private fields, required by
  * the custom passive render. Field names verified against Create 6.0.10.
  */

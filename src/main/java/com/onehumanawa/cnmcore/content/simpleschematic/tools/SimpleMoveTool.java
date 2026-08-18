@@ -6,9 +6,6 @@ import com.simibubi.create.content.schematics.client.tools.MoveTool;
 
 import net.createmod.catnip.render.SuperRenderTypeBuffer;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- */
 public class SimpleMoveTool extends MoveTool {
     @Override
     public void init() {

@@ -25,7 +25,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * A schematic item that loads its structure from the local {@code schematics/} folder,
  * referenced by the {@link AllDataComponents#SCHEMATIC_FILE} data component.
  */

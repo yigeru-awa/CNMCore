@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import java.util.List;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Accessor for Create's {@link SchematicPrinter} private fields, required to
  * load a schematic at an arbitrary anchor without Create's deploy flow.
  * Field names verified against Create 6.0.10.

@@ -24,7 +24,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Loads a Simple Schematic item at an explicit anchor for instant printing,
  * bypassing Create's deploy/sync flow.
  */

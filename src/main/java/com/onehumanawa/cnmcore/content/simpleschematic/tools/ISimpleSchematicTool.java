@@ -11,10 +11,6 @@ import net.createmod.catnip.render.SuperRenderTypeBuffer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- * Shared green-tinted outline rendering for all Simple Schematic tools.
- */
 public class ISimpleSchematicTool {
 
     public static void renderOnSchematic(

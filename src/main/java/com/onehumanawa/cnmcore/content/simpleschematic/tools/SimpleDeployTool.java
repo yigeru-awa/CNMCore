@@ -9,9 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- */
 public class SimpleDeployTool extends DeployTool {
     @Override
     public void init() {

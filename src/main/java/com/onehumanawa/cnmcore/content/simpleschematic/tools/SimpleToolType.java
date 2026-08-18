@@ -8,11 +8,6 @@ import com.simibubi.create.content.schematics.client.tools.ToolType;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- * Maps each Simple Schematic tool to its Create {@link ToolType} counterpart by
- * name rather than ordinal, so enum ordering differences can never break the mapping.
- */
 public enum SimpleToolType {
 
     DEPLOY(new SimpleDeployTool()),

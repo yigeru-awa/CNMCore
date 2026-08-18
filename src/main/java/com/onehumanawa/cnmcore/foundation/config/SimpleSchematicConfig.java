@@ -4,7 +4,6 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Common configuration for the Simple Schematic feature.
  */
 public class SimpleSchematicConfig {

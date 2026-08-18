@@ -13,9 +13,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- */
 public class SimpleFlipTool extends FlipTool {
 
     private final AABBOutline outline = new AABBOutline(new AABB(BlockPos.ZERO));

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Green-tinted variant of Create's tool selection HUD for the Simple Schematic item.
  */
 public class SimpleToolSelectionScreen extends ToolSelectionScreen {

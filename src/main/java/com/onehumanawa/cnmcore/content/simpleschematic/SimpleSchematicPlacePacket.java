@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 
 /**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
  * Instantly prints a deployed Simple Schematic on the server.
  */
 public record SimpleSchematicPlacePacket(ItemStack stack, BlockPos anchor, Rotation rotation, Mirror mirror)

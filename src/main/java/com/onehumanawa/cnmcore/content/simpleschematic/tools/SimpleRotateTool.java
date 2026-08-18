@@ -10,9 +10,6 @@ import net.createmod.catnip.render.SuperRenderTypeBuffer;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- */
 public class SimpleRotateTool extends RotateTool {
 
     private final LineOutline line = new LineOutline();

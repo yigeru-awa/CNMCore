@@ -6,9 +6,6 @@ import com.simibubi.create.content.schematics.client.tools.PlaceTool;
 
 import net.createmod.catnip.render.SuperRenderTypeBuffer;
 
-/**
- * Ported from CreateSimpleSchematic by leaf, used with permission.
- */
 public class SimplePlaceTool extends PlaceTool {
     @Override
     public void init() {
