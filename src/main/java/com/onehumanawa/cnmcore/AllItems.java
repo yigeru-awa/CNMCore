@@ -17,10 +17,15 @@ public class AllItems {
             .item("fluid_mechanism", Item::new)
             .register();
 
-    // Hand-written item model lives in resources, skip datagen model generation
     public static final ItemEntry<SimpleSchematicItem> SIMPLE_SCHEMATIC = REGISTRATE
             .item("simple_schematic", SimpleSchematicItem::new)
             .properties(p -> p.stacksTo(16))
+            .model(AssetLookup.existingItemModel())
+            .register();
+
+    public static final ItemEntry<RedprintItem> REDPRINT = REGISTRATE
+            .item("redprint", RedprintItem::new)
+            .properties(p -> p.stacksTo(1))
             .model(AssetLookup.existingItemModel())
             .register();
 
