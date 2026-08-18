@@ -76,7 +76,7 @@ public class RedprintHandler {
 
         AABB selectionBox = getCurrentSelectionBox();
         if (selectionBox != null) {
-            Outliner.getInstance().showAABB(outlineSlot, selectionBox)
+            Outliner.getInstance().chaseAABB(outlineSlot, selectionBox)
                     .colored(0xFF6464)
                     .lineWidth(1 / 16f)
                     .highlightFace(highlightFace);
@@ -215,6 +215,7 @@ public class RedprintHandler {
      * Handles mouse scroll to adjust range.
      */
     public boolean mouseScrolled(double delta) {
+        // Only handle when Ctrl is held
         if (!AllKeys.ctrlDown()) return false;
 
         Minecraft mc = Minecraft.getInstance();
@@ -234,7 +235,6 @@ public class RedprintHandler {
      * Handles mouse input for the tool.
      */
     public boolean onMouseInput(int button, boolean pressed) {
-        if (!pressed || button != 0) return false;
-        return true;
+        return pressed && button == 0;
     }
 }

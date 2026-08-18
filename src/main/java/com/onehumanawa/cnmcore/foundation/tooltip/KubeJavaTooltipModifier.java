@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.onehumanawa.cnmcore.AllItems;
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.foundation.item.ItemDescription;
@@ -153,6 +154,36 @@ public final class KubeJavaTooltipModifier {
      * construction. Declare all item tooltips here.
      */
     public static void init() {
+        tooltip(AllItems.REDPRINT)
+                .summary(
+                        "A _batch removal_ tool for clearing large areas",
+                        "用于_批量移除_大范围方块的工具"
+                )
+                .behaviour(
+                        "Right-click block face",
+                        "Select first corner (adjacent block)",
+                        "右键点击方块面",
+                        "选择第一角（点击面相邻的方块）"
+                )
+                .behaviour(
+                        "Right-click again",
+                        "Select second corner, expands selection",
+                        "再次右键点击",
+                        "选择第二角，扩展选区"
+                )
+                .behaviour(
+                        "Right-click when both corners set",
+                        "Remove all blocks in the selected area",
+                        "两个角都选好后右键",
+                        "移除选中区域内所有方块"
+                )
+                .behaviour(
+                        "Shift + Right-click",
+                        "Cancel current selection",
+                        "Shift + 右键",
+                        "取消当前选择"
+                )
+                .register();
     }
 
     // ------------------------------------------------------------------
