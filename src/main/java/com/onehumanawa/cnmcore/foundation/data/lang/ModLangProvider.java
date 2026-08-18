@@ -30,6 +30,8 @@ public class ModLangProvider extends LanguageProvider {
     private void generateEnUs() {
         generateLang("item.cnmcore.logistic_mechanism", "Logistic Mechanism");
         generateLang("item.cnmcore.fluid_mechanism", "Fluid Mechanism");
+        generateLang("item.cnmcore.simple_schematic", "Engineering Set");
+        generateLang("item.cnmcore.simple_schematic.dash", " - ");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -37,6 +39,8 @@ public class ModLangProvider extends LanguageProvider {
     private void generateZhCn() {
         generateLang("item.cnmcore.logistic_mechanism", "物流构件");
         generateLang("item.cnmcore.fluid_mechanism", "流体构件");
+        generateLang("item.cnmcore.simple_schematic", "工程集合");
+        generateLang("item.cnmcore.simple_schematic.dash", " - ");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }

@@ -3,9 +3,12 @@
   "minVersion": "0.8",
   "package": "com.onehumanawa.cnmcore.mixin",
   "compatibilityLevel": "JAVA_21",
+  "refmap": "cnmcore.refmap.json",
   "mixins": [
+    "SchematicPrinterAccessor"
   ],
   "client": [
+    "ToolSelectionScreenAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
