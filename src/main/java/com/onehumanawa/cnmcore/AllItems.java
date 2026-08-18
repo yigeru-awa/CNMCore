@@ -1,6 +1,6 @@
 package com.onehumanawa.cnmcore;
 
-import com.onehumanawa.cnmcore.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.ItemEntry;
 import net.minecraft.world.item.Item;
 
