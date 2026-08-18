@@ -3,8 +3,11 @@ package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -54,6 +57,17 @@ public class WirelessRedstoneControlTerminalBlock extends Block implements Entit
             serverPlayer.openMenu(terminal, buf -> buf.writeBlockPos(pos));
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+            Player player, InteractionHand hand, BlockHitResult hitResult) {
+        // Sneaking with the binder binds the clicked component instead of opening the GUI
+        if (stack.getItem() instanceof WirelessInductionBinderItem && player.isShiftKeyDown()) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        // Anything else in hand (including the binder) falls through to useWithoutItem and opens the GUI
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     // Redstone output: strongest active OUTPUT node weakly powers every face

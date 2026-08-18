@@ -24,10 +24,12 @@ public class ModLangProvider extends LanguageProvider {
     private void generateEnUs() {
         generateLang("item.cnmcore.logistic_mechanism", "Logistic Mechanism");
         generateLang("item.cnmcore.fluid_mechanism", "Fluid Mechanism");
+        generateLang("item.cnmcore.wireless_induction_binder", "Wireless Induction Binder");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
 
         generateLang("block.cnmcore.wireless_redstone_control_terminal", "Wireless Redstone Control Terminal");
+        generateLang("block.cnmcore.wrt_endpoint", "Terminal Endpoint");
         generateLang("cnmcore.wrt.rx", "Receive");
         generateLang("cnmcore.wrt.tx", "Transmit");
         generateLang("cnmcore.wrt.nodes", "Nodes:");
@@ -36,9 +38,24 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.clear", "Clear");
         generateLang("cnmcore.wrt.delete", "Delete");
         generateLang("cnmcore.wrt.tab.new", "New program");
-        generateLang("cnmcore.wrt.freq", "Frequency: %s");
+        generateLang("cnmcore.wrt.freq", "Frequency: %s + %s");
         generateLang("cnmcore.wrt.freq.empty", "Empty");
         generateLang("cnmcore.wrt.note.freq", "Click with a held item to copy it, right-click to clear, or drag an item in from JEI");
+        generateLang("cnmcore.wrt.bind", "Bind");
+        generateLang("cnmcore.wrt.unbind", "Unbind");
+        generateLang("cnmcore.wrt.bound", "Bound: %s");
+        generateLang("cnmcore.wrt.cfg.unbound", "Unbound");
+        generateLang("cnmcore.wrt.binder.set", "Bound to %s");
+        generateLang("cnmcore.wrt.binder.blocked", "Cannot bind: the endpoint space next to the bound block is occupied");
+        generateLang("cnmcore.wrt.binder.cleared", "Binding cleared");
+        generateLang("cnmcore.wrt.binder.select", "Selected input: program %s, node %s");
+        generateLang("cnmcore.wrt.binder.noinput", "This terminal has no redstone input nodes");
+        generateLang("cnmcore.wrt.binder.offline", "The terminal is not loaded");
+        generateLang("cnmcore.wrt.binder.in.set", "Input bound to %s");
+        generateLang("cnmcore.wrt.binder.tooltip.bound", "Bound: %s");
+        generateLang("cnmcore.wrt.binder.tooltip.pending", "Selected input: program %s, node %s");
+        generateLang("cnmcore.wrt.binder.tooltip.hint", "Shift+Right-click a redstone component to bind it to an OUT node");
+        generateLang("cnmcore.wrt.binder.tooltip.hint2", "Shift+Right-click the terminal to select an input, then right-click a component to bind it");
         generateLang("cnmcore.wrt.cfg.input_count", "Inputs");
         generateLang("cnmcore.wrt.cfg.pulse_width", "Width (tick)");
         generateLang("cnmcore.wrt.cfg.period", "Period (tick)");
@@ -59,6 +76,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.side.6", "East");
         generateLang("cnmcore.wrt.note.passthrough", "Passes input through");
         generateLang("cnmcore.wrt.note.latch", "IN1: SET, IN2: RESET");
+        generateLang("cnmcore.wrt.note.in.bound", "Reading the bound component instead of the terminal's own faces");
 
         generateLang("cnmcore.wrt.node.and", "AND Gate");
         generateLang("cnmcore.wrt.node.and.desc", "Output ON when all inputs are ON");
@@ -91,7 +109,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.node.w_in", "Wireless Input");
         generateLang("cnmcore.wrt.node.w_in.desc", "Listens to its own wireless frequency");
         generateLang("cnmcore.wrt.node.output", "Redstone Output");
-        generateLang("cnmcore.wrt.node.output.desc", "Emits a redstone signal to adjacent blocks");
+        generateLang("cnmcore.wrt.node.output.desc", "Emits a redstone signal to adjacent blocks, or delivers directly to a bound position");
         generateLang("cnmcore.wrt.node.w_out", "Wireless Output");
         generateLang("cnmcore.wrt.node.w_out.desc", "Transmits on its own wireless frequency");
         generateLang("cnmcore.wrt.node.const", "Constant");
@@ -101,10 +119,12 @@ public class ModLangProvider extends LanguageProvider {
     private void generateZhCn() {
         generateLang("item.cnmcore.logistic_mechanism", "物流构件");
         generateLang("item.cnmcore.fluid_mechanism", "流体构件");
+        generateLang("item.cnmcore.wireless_induction_binder", "无线感应绑定器");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
 
         generateLang("block.cnmcore.wireless_redstone_control_terminal", "无线红石总控终端");
+        generateLang("block.cnmcore.wrt_endpoint", "终端端点");
         generateLang("cnmcore.wrt.rx", "接收");
         generateLang("cnmcore.wrt.tx", "发射");
         generateLang("cnmcore.wrt.nodes", "节点:");
@@ -113,9 +133,24 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.clear", "清空");
         generateLang("cnmcore.wrt.delete", "删除");
         generateLang("cnmcore.wrt.tab.new", "新建程序");
-        generateLang("cnmcore.wrt.freq", "频段: %s");
+        generateLang("cnmcore.wrt.freq", "频段: %s + %s");
         generateLang("cnmcore.wrt.freq.empty", "空");
         generateLang("cnmcore.wrt.note.freq", "手持物品左键点击复制，右键清空，或直接从 JEI 拖入");
+        generateLang("cnmcore.wrt.bind", "绑定");
+        generateLang("cnmcore.wrt.unbind", "解绑");
+        generateLang("cnmcore.wrt.bound", "已绑定: %s");
+        generateLang("cnmcore.wrt.cfg.unbound", "未绑定");
+        generateLang("cnmcore.wrt.binder.set", "已绑定至 %s");
+        generateLang("cnmcore.wrt.binder.blocked", "无法绑定：绑定方块旁的端点位置已被占用");
+        generateLang("cnmcore.wrt.binder.cleared", "已清除绑定");
+        generateLang("cnmcore.wrt.binder.select", "已选择输入：程序 %s，节点 %s");
+        generateLang("cnmcore.wrt.binder.noinput", "该终端没有红石输入节点");
+        generateLang("cnmcore.wrt.binder.offline", "终端未加载");
+        generateLang("cnmcore.wrt.binder.in.set", "输入已绑定至 %s");
+        generateLang("cnmcore.wrt.binder.tooltip.bound", "已绑定: %s");
+        generateLang("cnmcore.wrt.binder.tooltip.pending", "已选择输入：程序 %s，节点 %s");
+        generateLang("cnmcore.wrt.binder.tooltip.hint", "Shift 右键红石元件以绑定到 OUT 节点");
+        generateLang("cnmcore.wrt.binder.tooltip.hint2", "Shift 右键终端选择输入节点，再右键红石元件直接绑定");
         generateLang("cnmcore.wrt.cfg.input_count", "输入数");
         generateLang("cnmcore.wrt.cfg.pulse_width", "脉宽 (tick)");
         generateLang("cnmcore.wrt.cfg.period", "周期 (tick)");
@@ -136,6 +171,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.side.6", "东");
         generateLang("cnmcore.wrt.note.passthrough", "直通输入信号");
         generateLang("cnmcore.wrt.note.latch", "输入1: 置位, 输入2: 复位");
+        generateLang("cnmcore.wrt.note.in.bound", "正在读取绑定元件的信号，而非终端自身输入面");
 
         generateLang("cnmcore.wrt.node.and", "与门");
         generateLang("cnmcore.wrt.node.and.desc", "所有输入为 ON 时输出 ON");
@@ -168,7 +204,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.wrt.node.w_in", "无线输入");
         generateLang("cnmcore.wrt.node.w_in.desc", "监听自己专属频段的无线红石信号");
         generateLang("cnmcore.wrt.node.output", "红石输出");
-        generateLang("cnmcore.wrt.node.output.desc", "输出红石信号到相邻方块");
+        generateLang("cnmcore.wrt.node.output.desc", "输出红石信号到相邻方块，或直接投递至绑定的位置");
         generateLang("cnmcore.wrt.node.w_out", "无线输出");
         generateLang("cnmcore.wrt.node.w_out.desc", "通过自己专属的频段发送无线红石信号");
         generateLang("cnmcore.wrt.node.const", "常量");

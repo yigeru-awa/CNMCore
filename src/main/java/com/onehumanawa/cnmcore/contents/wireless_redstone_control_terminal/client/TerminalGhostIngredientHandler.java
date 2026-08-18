@@ -5,11 +5,12 @@ import mezz.jei.api.ingredients.ITypedIngredient;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Accepts ingredients dragged from the JEI list onto the selected wireless node's
- * frequency slot. The item is only copied as a ghost frequency reference.
+ * two frequency slots. The item is only copied as a ghost frequency reference.
  */
 public class TerminalGhostIngredientHandler implements IGhostIngredientHandler<WirelessRedstoneControlTerminalScreen> {
 
@@ -19,30 +20,35 @@ public class TerminalGhostIngredientHandler implements IGhostIngredientHandler<W
         if (!(ingredient.getIngredient() instanceof ItemStack)) {
             return List.of();
         }
-        Rect2i area = screen.frequencySlotRect();
-        if (area == null) {
-            return List.of();
-        }
-        return List.of(new Target<I>() {
-            @Override
-            public Rect2i getArea() {
-                return area;
+        List<Target<I>> targets = new ArrayList<>();
+        for (int slot = 0; slot < 2; slot++) {
+            Rect2i area = screen.frequencySlotRect(slot);
+            if (area == null) {
+                return List.of();
             }
-
-            @Override
-            public void accept(I target) {
-                if (target instanceof ItemStack stack) {
-                    screen.jeiSetFrequency(stack);
+            final int targetSlot = slot;
+            targets.add(new Target<I>() {
+                @Override
+                public Rect2i getArea() {
+                    return area;
                 }
-            }
-        });
+
+                @Override
+                public void accept(I target) {
+                    if (target instanceof ItemStack stack) {
+                        screen.jeiSetFrequency(stack, targetSlot);
+                    }
+                }
+            });
+        }
+        return targets;
     }
 
     @Override
     public <I> boolean quickMove(WirelessRedstoneControlTerminalScreen screen, ITypedIngredient<I> ingredient) {
-        // Shift-click an ingredient in JEI while the frequency slot is visible
-        if (screen.frequencySlotRect() != null && ingredient.getIngredient() instanceof ItemStack stack) {
-            screen.jeiSetFrequency(stack);
+        // Shift-click an ingredient in JEI while the frequency slots are visible; fills the first slot
+        if (screen.frequencySlotRect(0) != null && ingredient.getIngredient() instanceof ItemStack stack) {
+            screen.jeiSetFrequency(stack, 0);
             return true;
         }
         return false;

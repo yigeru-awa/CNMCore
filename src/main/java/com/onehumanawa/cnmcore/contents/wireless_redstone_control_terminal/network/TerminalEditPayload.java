@@ -16,7 +16,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client -> server terminal edit request, targeting one program (tab).
  * Actions: 0=add(type,x,y), 1=move(id,x,y), 2=remove(id), 3=connect(target,port,source),
  * 4=disconnect(target,port), 5=setConfig(id,value), 6=clear, 7=addWaypoint(target,port,packed),
- * 8=createProgram, 9=deleteProgram(id), 10=switchProgram(id).
+ * 8=createProgram, 9=deleteProgram(id), 10=switchProgram(id),
+ * 11=bindOutput(nodeId) from the held binder, 12=unbindOutput(nodeId).
  */
 public record TerminalEditPayload(BlockPos pos, int program, int action, int a, int b, int c) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<TerminalEditPayload> TYPE =
@@ -46,7 +47,7 @@ public record TerminalEditPayload(BlockPos pos, int program, int action, int a, 
             if (player.distanceToSqr(Vec3.atCenterOf(payload.pos())) > 64.0D) {
                 return;
             }
-            terminal.handleEdit(payload.program(), payload.action(), payload.a(), payload.b(), payload.c());
+            terminal.handleEdit(player, payload.program(), payload.action(), payload.a(), payload.b(), payload.c());
         });
     }
 }

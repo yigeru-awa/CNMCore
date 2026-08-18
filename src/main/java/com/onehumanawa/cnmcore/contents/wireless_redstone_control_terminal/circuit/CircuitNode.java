@@ -1,11 +1,14 @@
 package com.onehumanawa.cnmcore.contents.wireless_redstone_control_terminal.circuit;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -23,8 +26,17 @@ public class CircuitNode {
     public int[] inputs = new int[0];
     /** Custom wire waypoints per input port, each packed as {@code (x << 8) | y}, null when the wire is straight. */
     public int[][] waypoints = new int[0][];
-    /** Own wireless frequency for W_IN / W_OUT nodes. A ghost reference, never a physical item. */
-    public ItemStack frequency = ItemStack.EMPTY;
+    /** Own two wireless frequencies for W_IN / W_OUT nodes, like a vanilla Redstone Link.
+     *  Ghost references only, never physical items. */
+    public final ItemStack[] frequencies = new ItemStack[]{ItemStack.EMPTY, ItemStack.EMPTY};
+    /** Bound redstone component position of an OUTPUT node (set via the wireless induction binder),
+     *  null when the output powers the terminal's own faces instead. The invisible endpoint block
+     *  occupies the space next to it on {@link #boundFace}. */
+    @Nullable
+    public BlockPos boundTarget;
+    /** Face of the bound component the endpoint block was placed against. */
+    @Nullable
+    public Direction boundFace;
     /** Current output signal strength (0-15). */
     public int value;
 
@@ -35,6 +47,8 @@ public class CircuitNode {
     private int counter;
     private int[] delayBuffer = new int[0];
     private int delayHead;
+    /** Last strength pushed to {@link #boundTarget}, -1 when nothing was delivered yet. */
+    public int lastDelivered = -1;
 
     public CircuitNode(int id, NodeType type, int x, int y) {
         this.id = id;
@@ -184,6 +198,12 @@ public class CircuitNode {
         };
     }
 
+    /** Position of the invisible endpoint block delivering this node's signal, null when unbound. */
+    @Nullable
+    public BlockPos endpointPos() {
+        return boundTarget == null || boundFace == null ? null : boundTarget.relative(boundFace);
+    }
+
     public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         tag.putInt("id", id);
@@ -192,8 +212,16 @@ public class CircuitNode {
         tag.putInt("y", y);
         tag.putInt("cfg", config);
         tag.putIntArray("in", inputs);
-        if (!frequency.isEmpty()) {
-            tag.put("freq", frequency.save(registries));
+        for (int slot = 0; slot < frequencies.length; slot++) {
+            if (!frequencies[slot].isEmpty()) {
+                tag.put("freq" + slot, frequencies[slot].save(registries));
+            }
+        }
+        if (boundTarget != null) {
+            tag.putLong("bpos", boundTarget.asLong());
+        }
+        if (boundFace != null) {
+            tag.putByte("bface", (byte) boundFace.get3DDataValue());
         }
         boolean hasWaypoints = false;
         ListTag waypointList = new ListTag();
@@ -213,7 +241,16 @@ public class CircuitNode {
         this.y = tag.getInt("y");
         this.config = tag.getInt("cfg");
         resizeInputs();
-        this.frequency = ItemStack.parseOptional(registries, tag.getCompound("freq"));
+        for (int slot = 0; slot < frequencies.length; slot++) {
+            frequencies[slot] = ItemStack.parseOptional(registries, tag.getCompound("freq" + slot));
+        }
+        // Migration from the old single-frequency format
+        if (frequencies[0].isEmpty() && tag.contains("freq")) {
+            frequencies[0] = ItemStack.parseOptional(registries, tag.getCompound("freq"));
+        }
+        this.boundTarget = tag.contains("bpos") ? BlockPos.of(tag.getLong("bpos")) : null;
+        this.boundFace = tag.contains("bface") ? Direction.from3DDataValue(tag.getByte("bface")) : null;
+        this.lastDelivered = -1;
         int[] saved = tag.getIntArray("in");
         for (int i = 0; i < saved.length && i < inputs.length; i++) {
             inputs[i] = saved[i];
