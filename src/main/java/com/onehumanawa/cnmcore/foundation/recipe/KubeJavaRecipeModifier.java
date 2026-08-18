@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import com.onehumanawa.cnmcore.foundation.data.recipe.KubeJavaDatagenSupport;
+import com.onehumanawa.cnmcore.foundation.item.ItemSpec;
 
 /**
  * ====================================================================

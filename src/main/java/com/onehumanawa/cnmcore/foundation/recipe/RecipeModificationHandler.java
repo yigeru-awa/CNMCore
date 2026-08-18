@@ -33,6 +33,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 
 import com.onehumanawa.cnmcore.CNMCore;
 import com.onehumanawa.cnmcore.foundation.data.recipe.KubeJavaDatagenSupport;
+import com.onehumanawa.cnmcore.foundation.item.ItemSpec;
 
 /**
  * Engine for modpack-wide recipe control. Declarative configuration lives in

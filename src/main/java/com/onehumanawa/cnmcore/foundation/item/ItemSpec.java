@@ -1,4 +1,4 @@
-package com.onehumanawa.cnmcore.foundation.recipe;
+package com.onehumanawa.cnmcore.foundation.item;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -9,9 +9,9 @@ import com.google.gson.JsonParser;
  * {@code "modid:item@{components json}"} ({@code @} is not a valid character
  * in resource locations, so plain ids can never be misread as encoded specs).
  * <p>
- * Specs are produced by {@link #of(String, String)}
- * ({@code KubeJavaRecipeModifier.itemOf}) and accepted anywhere a plain item
- * id is accepted: as replacement targets of
+ * Specs are produced by the {@code itemOf} helpers of
+ * {@code KubeJavaRecipeModifier} and {@code KubeJavaTooltipModifier}, and
+ * accepted anywhere a plain item id is accepted: as replacement targets of
  * {@code replaceInput}/{@code replaceOutput}, and as ingredient/result
  * parameters of the {@code add*} recipe builders.
  * <p>
@@ -47,11 +47,11 @@ public final class ItemSpec {
         return id + SEPARATOR + dataComponents.trim();
     }
 
-    static boolean isEncoded(String spec) {
+    public static boolean isEncoded(String spec) {
         return spec.indexOf(SEPARATOR) > 0;
     }
 
-    static Decoded decode(String spec) {
+    public static Decoded decode(String spec) {
         int separator = spec.indexOf(SEPARATOR);
         if (separator < 0)
             return new Decoded(spec, null);
@@ -66,7 +66,7 @@ public final class ItemSpec {
      * {@code {"type": "neoforge:components", "items": [...], "components": {...}}}
      * (partial match, matching stacks may carry further components).
      */
-    static JsonObject ingredientJson(String spec) {
+    public static JsonObject ingredientJson(String spec) {
         Decoded decoded = decode(spec);
         JsonObject json = new JsonObject();
         if (decoded.components() == null) {
@@ -86,7 +86,7 @@ public final class ItemSpec {
      * "components": {...}}}; the {@code count} field is omitted when 1 and
      * {@code components} when the spec carries none.
      */
-    static JsonObject stackJson(String spec, int count) {
+    public static JsonObject stackJson(String spec, int count) {
         Decoded decoded = decode(spec);
         JsonObject json = new JsonObject();
         json.addProperty("id", decoded.id());
