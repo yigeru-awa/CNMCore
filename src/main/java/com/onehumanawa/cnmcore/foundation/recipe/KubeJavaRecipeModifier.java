@@ -102,6 +102,7 @@ import com.onehumanawa.cnmcore.foundation.data.recipe.KubeJavaDatagenSupport;
  * run in registration order. If any matching filter called {@code remove()},
  * the recipe is deleted regardless of other changes.
  */
+@SuppressWarnings({"unused"})
 public final class KubeJavaRecipeModifier {
 
     private KubeJavaRecipeModifier() {

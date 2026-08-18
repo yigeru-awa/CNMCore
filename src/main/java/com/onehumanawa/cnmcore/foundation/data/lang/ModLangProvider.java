@@ -1,6 +1,7 @@
 package com.onehumanawa.cnmcore.foundation.data.lang;
 
 import com.onehumanawa.cnmcore.CNMCore;
+import com.onehumanawa.cnmcore.foundation.tooltip.KubeJavaTooltipModifier;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -18,6 +19,11 @@ public class ModLangProvider extends LanguageProvider {
             generateEnUs();
         } else if (locale.equals("zh_cn")) {
             generateZhCn();
+        }
+
+        // Create-style "Hold [Shift] for summary" tooltip keys
+        for (KubeJavaTooltipModifier.Entry entry : KubeJavaTooltipModifier.entries()) {
+            entry.translations(locale).forEach(this::add);
         }
     }
 

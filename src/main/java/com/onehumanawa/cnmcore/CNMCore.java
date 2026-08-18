@@ -1,6 +1,7 @@
 package com.onehumanawa.cnmcore;
 
 import com.onehumanawa.cnmcore.foundation.data.lang.ModLangProvider;
+import com.onehumanawa.cnmcore.foundation.tooltip.KubeJavaTooltipModifier;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
@@ -11,6 +12,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
+@SuppressWarnings("unused")
 @Mod(CNMCore.ID)
 public class CNMCore {
     public static final String ID = "cnmcore";
@@ -19,13 +21,18 @@ public class CNMCore {
 
     // Set default creative tab for ALL items registered through Registrate
     private static final CreateRegistrate REGISTRATE = CreateRegistrate.create(ID)
-            .defaultCreativeTab(AllCreativeModeTabs.MAIN_TAB.getKey());
+            .defaultCreativeTab(AllCreativeModeTabs.MAIN_TAB.getKey())
+            // Create-style "Hold [Shift] for summary" tooltips, see KubeJavaTooltipModifier
+            .setTooltipModifierFactory(KubeJavaTooltipModifier::modifierFor);
 
     public CNMCore(IEventBus modEventBus) {
         LOGGER.info("{} initializing!", NAME);
 
         // Register creative tabs
         AllCreativeModeTabs.register(modEventBus);
+
+        // Load the modpack's tooltip configuration
+        KubeJavaTooltipModifier.init();
 
         // Register items
         AllItems.register();
