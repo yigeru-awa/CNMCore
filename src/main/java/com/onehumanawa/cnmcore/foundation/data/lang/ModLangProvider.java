@@ -32,6 +32,15 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("item.cnmcore.fluid_mechanism", "Fluid Mechanism");
         generateLang("item.cnmcore.simple_schematic", "Engineering Set");
         generateLang("item.cnmcore.simple_schematic.dash", " - ");
+        generateLang("item.cnmcore.redprint", "Redprint");
+        generateLang("cnmcore.redprint.first_pos", "First Corner: %s, %s, %s");
+        generateLang("cnmcore.redprint.second_pos", "Second Corner: %s, %s, %s");
+        generateLang("cnmcore.redprint.no_target", "No target block selected");
+        generateLang("cnmcore.redprint.executing", "Executing removal...");
+        generateLang("cnmcore.redprint.success", "Removed %s blocks");
+        generateLang("cnmcore.redprint.cancelled", "Selection cancelled");
+        generateLang("cnmcore.redprint.too_large", "Area too large (max 100000 blocks)");
+        generateLang("cnmcore.redprint.range", "Range: %s");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -41,6 +50,15 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("item.cnmcore.fluid_mechanism", "流体构件");
         generateLang("item.cnmcore.simple_schematic", "工程集合");
         generateLang("item.cnmcore.simple_schematic.dash", " - ");
+        generateLang("item.cnmcore.redprint", "红图");
+        generateLang("cnmcore.redprint.first_pos", "第一角: %s, %s, %s");
+        generateLang("cnmcore.redprint.second_pos", "第二角: %s, %s, %s");
+        generateLang("cnmcore.redprint.no_target", "没有选中目标方块");
+        generateLang("cnmcore.redprint.executing", "正在执行移除...");
+        generateLang("cnmcore.redprint.success", "已移除 %s 个方块");
+        generateLang("cnmcore.redprint.cancelled", "已取消选择");
+        generateLang("cnmcore.redprint.too_large", "区域过大 (最大 100000 方块)");
+        generateLang("cnmcore.redprint.range", "范围: %s");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }

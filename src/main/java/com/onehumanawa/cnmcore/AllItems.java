@@ -1,6 +1,7 @@
 package com.onehumanawa.cnmcore;
 
 import com.onehumanawa.cnmcore.content.simpleschematic.SimpleSchematicItem;
+import com.onehumanawa.cnmcore.content.redprint.RedprintItem;
 import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.ItemEntry;
@@ -20,13 +21,11 @@ public class AllItems {
     public static final ItemEntry<SimpleSchematicItem> SIMPLE_SCHEMATIC = REGISTRATE
             .item("simple_schematic", SimpleSchematicItem::new)
             .properties(p -> p.stacksTo(16))
-            .model(AssetLookup.existingItemModel())
             .register();
 
     public static final ItemEntry<RedprintItem> REDPRINT = REGISTRATE
             .item("redprint", RedprintItem::new)
             .properties(p -> p.stacksTo(1))
-            .model(AssetLookup.existingItemModel())
             .register();
 
     public static void register() {
