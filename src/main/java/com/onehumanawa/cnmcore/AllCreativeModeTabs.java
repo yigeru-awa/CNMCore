@@ -14,7 +14,7 @@ public class AllCreativeModeTabs {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB =
             TABS.register("main", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + CNMCore.ID + ".main"))
-                    .icon(() -> new ItemStack(AllItems.LOGISTIC_MECHANISM.get()))
+                    .icon(() -> new ItemStack(AllItems.REDPRINT.get()))
                     .build());
 
     public static void register(net.neoforged.bus.api.IEventBus bus) {

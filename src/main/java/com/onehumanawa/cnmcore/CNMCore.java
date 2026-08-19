@@ -3,6 +3,7 @@ package com.onehumanawa.cnmcore;
 import com.onehumanawa.cnmcore.foundation.config.SimpleSchematicConfig;
 import com.onehumanawa.cnmcore.foundation.data.lang.ModLangProvider;
 import com.onehumanawa.cnmcore.foundation.net.CNMPackets;
+import com.onehumanawa.cnmcore.foundation.registry.KubeJavaRegistryHandler;
 import com.onehumanawa.cnmcore.foundation.tooltip.KubeJavaTooltipModifier;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import net.minecraft.data.DataGenerator;
@@ -48,6 +49,9 @@ public class CNMCore {
 
         // Load the modpack's tooltip configuration
         KubeJavaTooltipModifier.init();
+
+        // Register simple items
+        KubeJavaRegistryHandler.init();
 
         // Register items
         AllItems.register();

@@ -10,14 +10,6 @@ import net.minecraft.world.item.Item;
 public class AllItems {
     private static final CreateRegistrate REGISTRATE = CNMCore.registrate();
 
-    public static final ItemEntry<Item> LOGISTIC_MECHANISM = REGISTRATE
-            .item("logistic_mechanism", Item::new)
-            .register();
-
-    public static final ItemEntry<Item> FLUID_MECHANISM = REGISTRATE
-            .item("fluid_mechanism", Item::new)
-            .register();
-
     public static final ItemEntry<SimpleSchematicItem> SIMPLE_SCHEMATIC = REGISTRATE
             .item("simple_schematic", SimpleSchematicItem::new)
             .properties(p -> p.stacksTo(16))
