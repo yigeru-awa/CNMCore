@@ -3,6 +3,7 @@ package com.onehumanawa.cnmcore;
 import com.onehumanawa.cnmcore.foundation.config.SimpleSchematicConfig;
 import com.onehumanawa.cnmcore.foundation.data.lang.ModLangProvider;
 import com.onehumanawa.cnmcore.foundation.net.CNMPackets;
+import com.onehumanawa.cnmcore.foundation.recipe.blockcrafting.BlockCraftingEvents;
 import com.onehumanawa.cnmcore.foundation.registry.KubeJavaRegistryHandler;
 import com.onehumanawa.cnmcore.foundation.tooltip.KubeJavaTooltipModifier;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -46,6 +47,9 @@ public class CNMCore {
         modContainer.registerConfig(ModConfig.Type.COMMON, SimpleSchematicConfig.SPEC);
         modEventBus.addListener(SimpleSchematicConfig::onLoad);
         modEventBus.addListener(SimpleSchematicConfig::onReload);
+
+        // Load Block Crafting Recipes
+        BlockCraftingEvents.register();
 
         // Load the modpack's tooltip configuration
         KubeJavaTooltipModifier.init();
