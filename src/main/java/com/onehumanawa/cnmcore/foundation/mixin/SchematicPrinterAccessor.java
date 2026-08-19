@@ -1,4 +1,4 @@
-package com.onehumanawa.cnmcore.mixin;
+package com.onehumanawa.cnmcore.foundation.mixin;
 
 import com.simibubi.create.content.schematics.SchematicPrinter;
 

@@ -2,7 +2,7 @@ package com.onehumanawa.cnmcore.content.simpleschematic;
 
 import com.onehumanawa.cnmcore.AllDataComponents;
 import com.onehumanawa.cnmcore.CNMCore;
-import com.onehumanawa.cnmcore.mixin.SchematicPrinterAccessor;
+import com.onehumanawa.cnmcore.foundation.mixin.SchematicPrinterAccessor;
 import com.simibubi.create.content.contraptions.StructureTransform;
 import com.simibubi.create.content.schematics.SchematicPrinter;
 import com.simibubi.create.content.schematics.SchematicProcessor;

@@ -3,7 +3,7 @@ package com.onehumanawa.cnmcore.content.simpleschematic;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.onehumanawa.cnmcore.mixin.ToolSelectionScreenAccessor;
+import com.onehumanawa.cnmcore.foundation.mixin.ToolSelectionScreenAccessor;
 import com.simibubi.create.AllKeys;
 import com.simibubi.create.content.schematics.client.ToolSelectionScreen;
 import com.simibubi.create.content.schematics.client.tools.ToolType;
