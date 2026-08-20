@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class BlockCraftingRecipe {
 
     private final ResourceLocation id;

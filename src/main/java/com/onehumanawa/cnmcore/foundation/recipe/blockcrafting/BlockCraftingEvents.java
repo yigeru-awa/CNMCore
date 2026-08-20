@@ -48,7 +48,7 @@ public final class BlockCraftingEvents {
                 event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
 
                 if (!recipe.feedback().isBlank()) {
-                    player.displayClientMessage(Component.translatable(recipe.feedback()), true);
+                    // player.displayClientMessage(Component.translatable(recipe.feedback()), true);
                 }
 
                 CNMCore.LOGGER.info("[BlockCrafting] Player {} crafted {}", player.getName().getString(), recipe.id());
