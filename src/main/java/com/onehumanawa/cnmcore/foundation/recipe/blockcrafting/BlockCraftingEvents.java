@@ -1,60 +1,72 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
 import com.onehumanawa.cnmcore.CNMCore;
+import com.simibubi.create.content.kinetics.deployer.DeployerFakePlayer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import java.util.Optional;
 
 /**
- * NeoForge integration: right-click block triggers recipe matching.
+ * NeoForge integration for block crafting.
+ * Handles right-click interactions and Deployer (mechanical arm) compatibility.
  */
 public final class BlockCraftingEvents {
 
     private BlockCraftingEvents() {}
 
     public static void register() {
-        CNMCore.LOGGER.info("[BlockCrafting] Events registered!");
         NeoForge.EVENT_BUS.addListener(BlockCraftingEvents::onRightClickBlock);
     }
 
     private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        CNMCore.LOGGER.info("[BlockCrafting] RightClickBlock event fired!");
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (event.getLevel().isClientSide()) return;
-        if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
-
-        CNMCore.LOGGER.info("[BlockCrafting] Passed checks, finding match...");
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
 
         var level = player.serverLevel();
         var pos = event.getPos();
         var input = event.getItemStack();
 
-        CNMCore.LOGGER.info("[BlockCrafting] center={}, input={}, block={}",
-                pos, input.getHoverName().getString(),
-                level.getBlockState(pos).getBlock().getDescriptionId());
-
         Optional<BlockCraftingRecipe> match = BlockCraftingRegistry.findMatch(level, pos, input);
+        if (match.isEmpty()) return;
 
-        if (match.isPresent()) {
-            CNMCore.LOGGER.info("[BlockCrafting] Match found!");
-            BlockCraftingRecipe recipe = match.get();
-            int rotation = recipe.matchingRotation(level, pos);
+        BlockCraftingRecipe recipe = match.get();
+        int rotation = recipe.matchingRotation(level, pos);
+        boolean isDeployer = player instanceof DeployerFakePlayer;
 
-            if (recipe.craft(level, pos, player, input, rotation)) {
-                event.setCanceled(true);
-                event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+        if (recipe.craft(level, pos, player, input, rotation, isDeployer)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
 
-                if (!recipe.feedback().isBlank()) {
-                    // player.displayClientMessage(Component.translatable(recipe.feedback()), true);
-                }
-
-                CNMCore.LOGGER.info("[BlockCrafting] Player {} crafted {}", player.getName().getString(), recipe.id());
+            if (!recipe.feedback().isBlank()) {
+                player.displayClientMessage(Component.translatable(recipe.feedback()), true);
             }
-        } else {
-            CNMCore.LOGGER.info("[BlockCrafting] No match found.");
+
+            // If triggered by a Deployer, insert results directly into its inventory via addItem
+            if (isDeployer) {
+                for (String resultId : recipe.resultIds()) {
+                    var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(resultId));
+                    if (item == null || item == Items.AIR) continue;
+                    ItemStack result = new ItemStack(item, 1);
+                    if (!player.addItem(result)) {
+                        Block.popResource(level, pos, result);
+                    }
+                }
+            }
+
+            CNMCore.LOGGER.info("[BlockCrafting] {} crafted {}",
+                    isDeployer ? "Deployer" : "Player " + player.getName().getString(),
+                    recipe.id());
         }
     }
 }

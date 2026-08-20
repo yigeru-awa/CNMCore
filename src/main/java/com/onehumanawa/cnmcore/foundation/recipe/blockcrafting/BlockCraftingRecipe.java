@@ -1,6 +1,5 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
-import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -8,12 +7,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.List;
 
-@SuppressWarnings("unused")
+/**
+ * Runtime block crafting recipe.
+ * Stores block/item IDs as strings; they are resolved at match time.
+ */
 public class BlockCraftingRecipe {
 
     private final ResourceLocation id;
@@ -69,12 +73,13 @@ public class BlockCraftingRecipe {
             boolean matches = true;
             for (PatternEntry entry : pattern) {
                 Vec3i offset = rotate(entry.offset(), rotation);
-                BlockPos target = center.offset(offset);
-                BlockState state = level.getBlockState(target);
+                BlockState state = level.getBlockState(center.offset(offset));
                 var block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(entry.blockId()));
-                CNMCore.LOGGER.info("[BlockCrafting] rotation={}, target={}, expected={}, actual={}",
-                        rotation, target, entry.blockId(), state.getBlock().getDescriptionId());
-                if (block == null || block == Blocks.AIR || !state.is(block)) {
+                if (block == null || block == Blocks.AIR) {
+                    matches = false;
+                    break;
+                }
+                if (!state.is(block)) {
                     matches = false;
                     break;
                 }
@@ -86,22 +91,20 @@ public class BlockCraftingRecipe {
 
     public boolean matches(ServerLevel level, BlockPos center, ItemStack stack) {
         var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemInputId));
-        CNMCore.LOGGER.info("[BlockCrafting] matches: itemInputId={}, resolvedItem={}, stack={}",
-                itemInputId, item, stack.getHoverName().getString());
-        if (item == null || !stack.is(item)) {
-            CNMCore.LOGGER.info("[BlockCrafting]   item mismatch");
-            return false;
-        }
-        int rotation = matchingRotation(level, center);
-        CNMCore.LOGGER.info("[BlockCrafting]   rotation={}", rotation);
-        return rotation >= 0;
+        if (item == null || !stack.is(item)) return false;
+        return matchingRotation(level, center) >= 0;
     }
 
     public boolean craft(ServerLevel level, BlockPos center, ServerPlayer player, ItemStack inputStack, int rotation) {
+        return craft(level, center, player, inputStack, rotation, false);
+    }
+
+    public boolean craft(ServerLevel level, BlockPos center, ServerPlayer player, ItemStack inputStack, int rotation, boolean isDeployer) {
         if (rotation < 0 || rotation > 3) return false;
         var inputItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemInputId));
         if (inputItem == null || !inputStack.is(inputItem)) return false;
 
+        // Destroy pattern blocks
         for (PatternEntry entry : pattern) {
             Vec3i offset = rotate(entry.offset(), rotation);
             BlockPos target = center.offset(offset);
@@ -110,17 +113,23 @@ public class BlockCraftingRecipe {
             level.destroyBlock(target, false);
         }
 
+        // Consume input item
         if (consumeInput && !player.getAbilities().instabuild) {
             inputStack.shrink(1);
         }
 
-        for (String resultId : resultIds) {
-            var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(resultId));
-            if (item != null && item != net.minecraft.world.item.Items.AIR) {
-                net.minecraft.world.level.block.Block.popResource(level, center, new ItemStack(item, 1));
+        // Drop results only for normal players
+        // For Deployer, results are handled by BlockCraftingEvents via addItem
+        if (!isDeployer) {
+            for (String resultId : resultIds) {
+                var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(resultId));
+                if (item != null && item != Items.AIR) {
+                    Block.popResource(level, center, new ItemStack(item, 1));
+                }
             }
         }
 
+        // Execute custom actions
         for (CraftingAction action : actions) {
             action.execute(level, center, player);
         }
