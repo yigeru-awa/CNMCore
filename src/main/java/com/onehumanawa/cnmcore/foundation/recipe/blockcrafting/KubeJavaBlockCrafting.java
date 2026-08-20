@@ -38,9 +38,6 @@ import java.util.Map;
  *     .register();
  * }</pre>
  * <p>
- * All declarations are defensive: invalid ids, missing center symbols or
- * empty patterns are logged and skipped during {@link #register()} - they
- * never throw, so one bad recipe cannot break startup.
  */
 public final class KubeJavaBlockCrafting {
 
