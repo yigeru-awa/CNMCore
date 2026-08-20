@@ -41,6 +41,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.redprint.cancelled", "Selection cancelled");
         generateLang("cnmcore.redprint.too_large", "Area too large (max 100000 blocks)");
         generateLang("cnmcore.redprint.range", "Range: %s");
+        generateLang("cnmcore.blockcrafting.success", "Block crafted successfully");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -59,6 +60,7 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.redprint.cancelled", "已取消选择");
         generateLang("cnmcore.redprint.too_large", "区域过大 (最大 100000 方块)");
         generateLang("cnmcore.redprint.range", "范围: %s");
+        generateLang("cnmcore.blockcrafting.success", "成功进行方块合成");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }

@@ -1,68 +1,60 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
+import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 /**
- * NeoForge integration for right-click crafting.
- * No commands, only Java-registered recipes.
+ * NeoForge integration: right-click block triggers recipe matching.
  */
 public final class BlockCraftingEvents {
-    private static final Logger LOGGER = LoggerFactory.getLogger("BlockCrafting/Events");
-    private static volatile boolean debugLogging = false;
-    private static volatile boolean failureFeedback = true;
 
     private BlockCraftingEvents() {}
 
     public static void register() {
+        CNMCore.LOGGER.info("[BlockCrafting] Events registered!");
         NeoForge.EVENT_BUS.addListener(BlockCraftingEvents::onRightClickBlock);
     }
 
-    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || event.getLevel().isClientSide()) return;
+    private static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        CNMCore.LOGGER.info("[BlockCrafting] RightClickBlock event fired!");
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (event.getLevel().isClientSide()) return;
         if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
 
+        CNMCore.LOGGER.info("[BlockCrafting] Passed checks, finding match...");
+
         var level = player.serverLevel();
+        var pos = event.getPos();
         var input = event.getItemStack();
-        Optional<BlockCraftingRecipe.Match> match = BlockCraftingRegistry.findMatch(level, event.getPos(), input);
+
+        CNMCore.LOGGER.info("[BlockCrafting] center={}, input={}, block={}",
+                pos, input.getHoverName().getString(),
+                level.getBlockState(pos).getBlock().getDescriptionId());
+
+        Optional<BlockCraftingRecipe> match = BlockCraftingRegistry.findMatch(level, pos, input);
 
         if (match.isPresent()) {
-            BlockCraftingRecipe recipe = match.get().recipe();
-            int rotation = match.get().rotation();
+            CNMCore.LOGGER.info("[BlockCrafting] Match found!");
+            BlockCraftingRecipe recipe = match.get();
+            int rotation = recipe.matchingRotation(level, pos);
 
-            NeoForge.EVENT_BUS.post(new BlockCraftingCompleteEvent(
-                    level, event.getPos(), player, recipe.id(), input.copy(), rotation
-            ));
-
-            if (recipe.craft(level, event.getPos(), player, input, rotation)) {
+            if (recipe.craft(level, pos, player, input, rotation)) {
                 event.setCanceled(true);
                 event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+
                 if (!recipe.feedback().isBlank()) {
                     player.displayClientMessage(Component.translatable(recipe.feedback()), true);
                 }
-                LOGGER.info("Player {} completed block crafting {} (rotation={})",
-                        player.getGameProfile().getName(), recipe.id(), rotation);
-            }
-            return;
-        }
 
-        if (debugLogging) {
-            LOGGER.info("No matching block crafting recipe: player={}, pos={}, input={}",
-                    player.getGameProfile().getName(), event.getPos(), input.getHoverName().getString());
-        }
-        if (failureFeedback && !BlockCraftingRegistry.candidates(input).isEmpty()) {
-            player.displayClientMessage(Component.translatable("blockcrafting.feedback.failure"), true);
+                CNMCore.LOGGER.info("[BlockCrafting] Player {} crafted {}", player.getName().getString(), recipe.id());
+            }
+        } else {
+            CNMCore.LOGGER.info("[BlockCrafting] No match found.");
         }
     }
-
-    public static boolean debugLogging() { return debugLogging; }
-    public static boolean failureFeedback() { return failureFeedback; }
-    public static void setDebugLogging(boolean enabled) { debugLogging = enabled; }
-    public static void setFailureFeedback(boolean enabled) { failureFeedback = enabled; }
 }

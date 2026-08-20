@@ -1,5 +1,6 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
+import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -9,10 +10,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Java-only registry for BlockCrafting recipes.
- * Use {@link KubeJavaBlockCrafting} to register recipes.
+ * Runtime registry for block crafting recipes.
+ * Stores recipes in memory, resolved at match time.
  */
 public final class BlockCraftingRegistry {
+
     private static final Map<ResourceLocation, BlockCraftingRecipe> RECIPES = new ConcurrentHashMap<>();
 
     private BlockCraftingRegistry() {}
@@ -34,30 +36,18 @@ public final class BlockCraftingRegistry {
         return RECIPES.remove(id) != null;
     }
 
-    public static boolean remove(String id) {
-        ResourceLocation parsed = ResourceLocation.tryParse(id);
-        return parsed != null && remove(parsed);
-    }
-
     public static Collection<BlockCraftingRecipe> all() {
-        List<BlockCraftingRecipe> sorted = new ArrayList<>(RECIPES.values());
-        sorted.sort(Comparator.comparing(recipe -> recipe.id().toString()));
-        return List.copyOf(sorted);
+        return List.copyOf(RECIPES.values());
     }
 
-    public static Optional<BlockCraftingRecipe.Match> findMatch(ServerLevel level, BlockPos center, ItemStack input) {
+    public static Optional<BlockCraftingRecipe> findMatch(ServerLevel level, BlockPos center, ItemStack input) {
+        CNMCore.LOGGER.info("[BlockCrafting] findMatch: checking {} recipes", RECIPES.size());
         for (BlockCraftingRecipe recipe : all()) {
-            int rotation = recipe.matchingRotation(level, center, input);
-            if (rotation >= 0) return Optional.of(new BlockCraftingRecipe.Match(recipe, rotation));
+            CNMCore.LOGGER.info("[BlockCrafting]   checking: {}", recipe.id());
+            boolean matches = recipe.matches(level, center, input);
+            CNMCore.LOGGER.info("[BlockCrafting]     result: {}", matches);
+            if (matches) return Optional.of(recipe);
         }
         return Optional.empty();
-    }
-
-    public static boolean canCraft(ServerLevel level, BlockPos center, ItemStack input) {
-        return findMatch(level, center, input).isPresent();
-    }
-
-    public static Collection<BlockCraftingRecipe> candidates(ItemStack input) {
-        return all().stream().filter(recipe -> recipe.matchesInput(input)).toList();
     }
 }

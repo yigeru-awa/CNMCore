@@ -165,7 +165,7 @@ dependencies {
 
     // FTB Series
     implementation("curse.maven:ftb-library-forge-404465:8569579")
-    implementation("curse.maven:ftb-quests-forge-289412:8648333")
+    // implementation("curse.maven:ftb-quests-forge-289412:8648333")
     implementation("curse.maven:ftb-teams-forge-404468:7878281")
 
     // Modern UI
