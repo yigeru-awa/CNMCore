@@ -42,6 +42,15 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.redprint.too_large", "Area too large (max 100000 blocks)");
         generateLang("cnmcore.redprint.range", "Range: %s");
         generateLang("cnmcore.blockcrafting.success", "Block crafted successfully");
+        generateLang("cnmcore.recipe.block_crafting", "Block Crafting");
+        generateLang("cnmcore.recipe.block_crafting.input", "Input");
+        generateLang("cnmcore.recipe.block_crafting.pattern", "Pattern");
+        generateLang("cnmcore.recipe.block_crafting.output", "Output");
+        generateLang("cnmcore.recipe.block_crafting.not_consumed", "Not Consumed");
+        generateLang("cnmcore.recipe.block_crafting.consumed", "Consumed");
+        generateLang("cnmcore.recipe.block_crafting.consumed_status", "Status: %s");
+        generateLang("cnmcore.recipe.block_crafting.center_marker", "Center Block");
+        generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "Kept");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -61,6 +70,15 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.redprint.too_large", "区域过大 (最大 100000 方块)");
         generateLang("cnmcore.redprint.range", "范围: %s");
         generateLang("cnmcore.blockcrafting.success", "成功进行方块合成");
+        generateLang("cnmcore.recipe.block_crafting", "方块合成");
+        generateLang("cnmcore.recipe.block_crafting.input", "输入");
+        generateLang("cnmcore.recipe.block_crafting.pattern", "结构");
+        generateLang("cnmcore.recipe.block_crafting.output", "产出");
+        generateLang("cnmcore.recipe.block_crafting.not_consumed", "不会被消耗");
+        generateLang("cnmcore.recipe.block_crafting.consumed", "被消耗");
+        generateLang("cnmcore.recipe.block_crafting.consumed_status", "状态: %s");
+        generateLang("cnmcore.recipe.block_crafting.center_marker", "中心方块");
+        generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "保留");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }
