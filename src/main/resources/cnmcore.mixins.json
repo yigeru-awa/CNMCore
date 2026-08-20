@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "cnmcore.refmap.json",
   "mixins": [
+    "DeployerBlockEntityMixin",
     "SchematicPrinterAccessor"
   ],
   "client": [

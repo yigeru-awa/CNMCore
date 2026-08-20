@@ -41,11 +41,8 @@ public final class BlockCraftingRegistry {
     }
 
     public static Optional<BlockCraftingRecipe> findMatch(ServerLevel level, BlockPos center, ItemStack input) {
-        CNMCore.LOGGER.info("[BlockCrafting] findMatch: checking {} recipes", RECIPES.size());
         for (BlockCraftingRecipe recipe : all()) {
-            CNMCore.LOGGER.info("[BlockCrafting]   checking: {}", recipe.id());
             boolean matches = recipe.matches(level, center, input);
-            CNMCore.LOGGER.info("[BlockCrafting]     result: {}", matches);
             if (matches) return Optional.of(recipe);
         }
         return Optional.empty();

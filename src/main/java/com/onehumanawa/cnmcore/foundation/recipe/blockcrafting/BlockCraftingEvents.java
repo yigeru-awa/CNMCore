@@ -63,10 +63,6 @@ public final class BlockCraftingEvents {
                     }
                 }
             }
-
-            CNMCore.LOGGER.info("[BlockCrafting] {} crafted {}",
-                    isDeployer ? "Deployer" : "Player " + player.getName().getString(),
-                    recipe.id());
         }
     }
 }

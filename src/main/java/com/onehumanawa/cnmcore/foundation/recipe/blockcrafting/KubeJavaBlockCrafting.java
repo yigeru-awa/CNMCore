@@ -160,7 +160,6 @@ public final class KubeJavaBlockCrafting {
 
                         String blockId = symbols.get(symbol);
                         if (blockId == null) {
-                            CNMCore.LOGGER.warn("[BlockCrafting] Undefined symbol '{}' in recipe {}, skipping", symbol, id);
                             continue;
                         }
 
