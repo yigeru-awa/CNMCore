@@ -6,13 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Collects language entries for items and blocks registered via KubeJavaRegistryHandler.
+ * Collects language entries for items, blocks and KubeJava declarations
+ * (item/block translations, block crafting feedback, ...). Consumed by
+ * ModLangProvider during data generation.
  */
 public final class LangCollector {
 
     private final Map<String, LangEntry> entries = new HashMap<>();
 
-    void add(String key, String en, String zh) {
+    /** Registers (or overwrites) the bilingual translation of one key. */
+    public void add(String key, String en, String zh) {
         entries.put(key, new LangEntry(en, zh));
     }
 

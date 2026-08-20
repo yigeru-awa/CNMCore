@@ -19,6 +19,8 @@ import java.util.Optional;
 /**
  * NeoForge integration for block crafting.
  * Handles right-click interactions and Deployer (mechanical arm) compatibility.
+ * A failing recipe can never crash the interaction: exceptions are caught
+ * and logged, the event is left untouched.
  */
 public final class BlockCraftingEvents {
 
@@ -33,29 +35,38 @@ public final class BlockCraftingEvents {
         if (event.getLevel().isClientSide()) return;
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
 
+        try {
+            handleInteraction(event, player);
+        } catch (Exception e) {
+            CNMCore.LOGGER.error("[BlockCrafting] Failed to process interaction at {}:", event.getPos(), e);
+        }
+    }
+
+    private static void handleInteraction(PlayerInteractEvent.RightClickBlock event, ServerPlayer player) {
         var level = player.serverLevel();
         var pos = event.getPos();
         var input = event.getItemStack();
 
-        Optional<BlockCraftingRecipe> match = BlockCraftingRegistry.findMatch(level, pos, input);
+        Optional<BlockCraftingRegistry.Match> match = BlockCraftingRegistry.findMatch(level, pos, input);
         if (match.isEmpty()) return;
 
-        BlockCraftingRecipe recipe = match.get();
-        int rotation = recipe.matchingRotation(level, pos);
+        BlockCraftingRecipe recipe = match.get().recipe();
         boolean isDeployer = player instanceof DeployerFakePlayer;
 
-        if (recipe.craft(level, pos, player, input, rotation, isDeployer)) {
+        if (recipe.craft(level, pos, player, input, match.get().rotation(), isDeployer)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
 
-            if (!recipe.feedback().isBlank()) {
+            if (recipe.feedback() != null && !recipe.feedback().isBlank()) {
                 player.displayClientMessage(Component.translatable(recipe.feedback()), true);
             }
 
             // If triggered by a Deployer, insert results directly into its inventory via addItem
             if (isDeployer) {
                 for (String resultId : recipe.resultIds()) {
-                    var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(resultId));
+                    ResourceLocation id = ResourceLocation.tryParse(resultId);
+                    if (id == null) continue;
+                    var item = BuiltInRegistries.ITEM.get(id);
                     if (item == null || item == Items.AIR) continue;
                     ItemStack result = new ItemStack(item, 1);
                     if (!player.addItem(result)) {

@@ -1,16 +1,33 @@
 package com.onehumanawa.cnmcore.foundation.data.lang;
 
 import com.onehumanawa.cnmcore.CNMCore;
+import com.onehumanawa.cnmcore.foundation.registry.KubeJavaRegistryHandler;
 import com.onehumanawa.cnmcore.foundation.tooltip.KubeJavaTooltipModifier;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ModLangProvider extends LanguageProvider {
     private final String locale;
+    private final Set<String> addedKeys = new HashSet<>();
 
     public ModLangProvider(PackOutput output, String locale) {
         super(output, CNMCore.ID, locale);
         this.locale = locale;
+    }
+
+    /**
+     * Ignores blank and duplicate keys, so hard-coded entries and
+     * KubeJava-collected entries can overlap without failing datagen.
+     */
+    @Override
+    public void add(String key, String value) {
+        if (key == null || key.isBlank() || value == null || value.isBlank()) return;
+        if (addedKeys.add(key)) {
+            super.add(key, value);
+        }
     }
 
     @Override
@@ -25,6 +42,11 @@ public class ModLangProvider extends LanguageProvider {
         for (KubeJavaTooltipModifier.Entry entry : KubeJavaTooltipModifier.entries()) {
             entry.translations(locale).forEach(this::add);
         }
+
+        // KubeJava-collected entries: item/block lang(...) and feedback(key, en, zh)
+        boolean zh = locale.equals("zh_cn");
+        KubeJavaRegistryHandler.getLangCollector().getEntries().forEach((key, entry) ->
+                add(key, zh ? entry.zh() : entry.en()));
     }
 
     private void generateEnUs() {
@@ -51,6 +73,8 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.recipe.block_crafting.consumed_status", "Status: %s");
         generateLang("cnmcore.recipe.block_crafting.center_marker", "Center Block");
         generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "Kept");
+        generateLang("cnmcore.recipe.block_crafting.layer_scroll", "Scroll on the structure to view layers");
+        generateLang("cnmcore.recipe.block_crafting.layer", "Layer %s / %s");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -79,6 +103,8 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.recipe.block_crafting.consumed_status", "状态: %s");
         generateLang("cnmcore.recipe.block_crafting.center_marker", "中心方块");
         generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "保留");
+        generateLang("cnmcore.recipe.block_crafting.layer_scroll", "在结构上滚动滚轮以按层查看");
+        generateLang("cnmcore.recipe.block_crafting.layer", "层数: %s / %s");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }

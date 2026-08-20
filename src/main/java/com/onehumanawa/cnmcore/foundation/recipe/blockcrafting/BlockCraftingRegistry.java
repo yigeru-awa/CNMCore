@@ -2,11 +2,15 @@ package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
 import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,6 +24,10 @@ public final class BlockCraftingRegistry {
     private BlockCraftingRegistry() {}
 
     public static void register(BlockCraftingRecipe recipe) {
+        if (recipe == null || recipe.id() == null) {
+            CNMCore.LOGGER.warn("[BlockCrafting] Ignored registration of an invalid recipe");
+            return;
+        }
         RECIPES.put(recipe.id(), recipe);
     }
 
@@ -40,10 +48,18 @@ public final class BlockCraftingRegistry {
         return List.copyOf(RECIPES.values());
     }
 
-    public static Optional<BlockCraftingRecipe> findMatch(ServerLevel level, BlockPos center, ItemStack input) {
-        for (BlockCraftingRecipe recipe : all()) {
-            boolean matches = recipe.matches(level, center, input);
-            if (matches) return Optional.of(recipe);
+    /**
+     * A matched recipe together with the rotation that matched,
+     * so callers don't need to scan rotations a second time.
+     */
+    public record Match(BlockCraftingRecipe recipe, int rotation) {}
+
+    public static Optional<Match> findMatch(ServerLevel level, BlockPos center, ItemStack input) {
+        for (BlockCraftingRecipe recipe : RECIPES.values()) {
+            var item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(recipe.itemInputId()));
+            if (item == null || !input.is(item)) continue;
+            int rotation = recipe.matchingRotation(level, center);
+            if (rotation >= 0) return Optional.of(new Match(recipe, rotation));
         }
         return Optional.empty();
     }

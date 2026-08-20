@@ -1,10 +1,15 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
 import com.onehumanawa.cnmcore.CNMCore;
+import com.onehumanawa.cnmcore.foundation.registry.KubeJavaRegistryHandler;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * KubeJava entry point for BlockCrafting recipes.
@@ -24,11 +29,18 @@ import java.util.*;
  *     .where('Z', "create:zinc_block")
  *     .center('A')
  *     .input("create:wrench")
- *     .consumePattern(false)
+ *     .keepPattern()          // keep iron & zinc blocks
  *     .consumeCenter(true)
- *     .result("create:andesite_alloy")
+ *     .result("create:andesite_alloy", 4)
+ *     .action(CraftingActions.sound("minecraft:block.anvil_land"))
+ *     .action(CraftingActions.particles("minecraft:happy_villager", 10))
+ *     .feedback("cnmcore.blockcrafting.success", "Block crafted successfully", "成功进行方块合成")
  *     .register();
  * }</pre>
+ * <p>
+ * All declarations are defensive: invalid ids, missing center symbols or
+ * empty patterns are logged and skipped during {@link #register()} - they
+ * never throw, so one bad recipe cannot break startup.
  */
 public final class KubeJavaBlockCrafting {
 
@@ -49,16 +61,23 @@ public final class KubeJavaBlockCrafting {
                 .where('Z', "create:zinc_block")
                 .center('A')
                 .input("create:wrench")
-                .consumePattern(false)
+                .keepPattern()
                 .consumeCenter(true)
-                .consumeInput(false)
+                .keepInput()
                 .result("create:andesite_alloy", 4)
-                .feedback("cnmcore.blockcrafting.success")
+                .action(CraftingActions.sound("minecraft:block.anvil_land"))
+                .action(CraftingActions.particles("minecraft:happy_villager", 10))
+                .feedback("cnmcore.blockcrafting.success", "Block crafted successfully", "成功进行方块合成")
                 .register();
     }
 
+    /**
+     * Starts a block crafting recipe declaration for the given id.
+     * Invalid ids are logged when the builder is created and the recipe
+     * is skipped on {@link Builder#register()}.
+     */
     public static Builder blockCrafting(String id) {
-        return new Builder(ResourceLocation.parse(id));
+        return new Builder(id);
     }
 
     public static final class Builder {
@@ -74,8 +93,12 @@ public final class KubeJavaBlockCrafting {
         private boolean consumeCenter = true;
         private boolean consumeInput = true;
 
-        private Builder(ResourceLocation id) {
-            this.id = id;
+        private Builder(String id) {
+            ResourceLocation parsed = id == null ? null : ResourceLocation.tryParse(id);
+            if (parsed == null) {
+                CNMCore.LOGGER.error("[BlockCrafting] Invalid recipe id '{}' - expected \"modid:path\", recipe skipped", id);
+            }
+            this.id = parsed;
         }
 
         /**
@@ -84,14 +107,19 @@ public final class KubeJavaBlockCrafting {
          * Space characters are ignored.
          */
         public Builder pattern(String... rows) {
-            if (rows.length == 0) {
-                throw new IllegalArgumentException("Pattern layer cannot be empty");
+            if (rows == null || rows.length == 0) {
+                CNMCore.LOGGER.warn("[BlockCrafting] Empty pattern layer ignored for {}", describe());
+                return this;
             }
             layers.add(rows);
             return this;
         }
 
         public Builder where(char symbol, String blockId) {
+            if (blockId == null || blockId.isBlank()) {
+                CNMCore.LOGGER.warn("[BlockCrafting] Blank block id for symbol '{}' ignored in {}", symbol, describe());
+                return this;
+            }
             symbols.put(symbol, blockId);
             return this;
         }
@@ -107,19 +135,41 @@ public final class KubeJavaBlockCrafting {
         }
 
         public Builder result(String... itemIds) {
-            resultIds.addAll(Arrays.asList(itemIds));
+            if (itemIds != null) {
+                resultIds.addAll(Arrays.asList(itemIds));
+            }
             return this;
         }
 
+        /**
+         * Adds the given item {@code count} times to the results.
+         */
         public Builder result(String itemId, int count) {
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < Math.max(0, count); i++) {
                 resultIds.add(itemId);
             }
             return this;
         }
 
         public Builder action(CraftingAction action) {
-            actions.add(action);
+            if (action != null) {
+                actions.add(action);
+            }
+            return this;
+        }
+
+        /**
+         * Sets the action bar feedback shown after crafting, with translations
+         * registered automatically (consumed by {@code ModLangProvider}).
+         *
+         * @param key translation key, e.g. {@code "cnmcore.blockcrafting.success"}
+         * @param en  english translation
+         * @param zh  chinese translation
+         */
+        public Builder feedback(String key, String en, String zh) {
+            if (key == null || key.isBlank()) return this;
+            this.feedback = key;
+            KubeJavaRegistryHandler.getLangCollector().add(key, en, zh);
             return this;
         }
 
@@ -143,7 +193,49 @@ public final class KubeJavaBlockCrafting {
             return this;
         }
 
-        public void register() {
+        /** Convenience overload of {@code consumePattern(false)}. */
+        public Builder keepPattern() {
+            return consumePattern(false);
+        }
+
+        /** Convenience overload of {@code consumeCenter(false)}. */
+        public Builder keepCenter() {
+            return consumeCenter(false);
+        }
+
+        /** Convenience overload of {@code consumeInput(false)}. */
+        public Builder keepInput() {
+            return consumeInput(false);
+        }
+
+        /** Consumes the whole structure and the input item. */
+        public Builder consumeAll() {
+            return consumePattern(true).consumeCenter(true).consumeInput(true);
+        }
+
+        /** Keeps the whole structure and the input item. */
+        public Builder keepAll() {
+            return keepPattern().keepCenter().keepInput();
+        }
+
+        /**
+         * Registers the recipe. Any invalid declaration is logged and skipped
+         * instead of throwing.
+         *
+         * @return whether the recipe was registered successfully
+         */
+        public boolean register() {
+            if (id == null) return false; // already logged at creation
+
+            if (layers.isEmpty()) {
+                CNMCore.LOGGER.error("[BlockCrafting] Recipe {} has no pattern layers, skipped", id);
+                return false;
+            }
+            if (centerSymbol == 0) {
+                CNMCore.LOGGER.error("[BlockCrafting] Recipe {} has no center symbol (call center(...)), skipped", id);
+                return false;
+            }
+
             List<BlockCraftingRecipe.PatternEntry> entries = new ArrayList<>();
             Vec3i centerOffset = null;
 
@@ -153,6 +245,7 @@ public final class KubeJavaBlockCrafting {
                 // rows: each string is a row along Z direction
                 for (int z = 0; z < rows.length; z++) {
                     String row = rows[z];
+                    if (row == null) continue;
                     // row: each character is a column along X direction
                     for (int x = 0; x < row.length(); x++) {
                         char symbol = row.charAt(x);
@@ -174,8 +267,13 @@ public final class KubeJavaBlockCrafting {
                 }
             }
 
+            if (entries.isEmpty()) {
+                CNMCore.LOGGER.error("[BlockCrafting] Recipe {} has no pattern blocks (check where(...) mappings), skipped", id);
+                return false;
+            }
             if (centerOffset == null) {
-                throw new IllegalStateException("Center symbol '" + centerSymbol + "' not found in pattern: " + id);
+                CNMCore.LOGGER.error("[BlockCrafting] Center symbol '{}' not found in pattern of {}, skipped", centerSymbol, id);
+                return false;
             }
 
             // Normalize all offsets so center is at (0, 0, 0)
@@ -201,7 +299,7 @@ public final class KubeJavaBlockCrafting {
             BlockCraftingRecipe recipe = new BlockCraftingRecipe(
                     id,
                     normalized,
-                    symbols.get(centerSymbol),
+                    centerSymbol,
                     inputId,
                     resultIds,
                     actions,
@@ -213,6 +311,11 @@ public final class KubeJavaBlockCrafting {
 
             BlockCraftingRegistry.register(recipe);
             CNMCore.LOGGER.info("[BlockCrafting] Registered recipe: {}", id);
+            return true;
+        }
+
+        private String describe() {
+            return id == null ? "<invalid id>" : id.toString();
         }
     }
 }

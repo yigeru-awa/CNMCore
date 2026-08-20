@@ -1,11 +1,13 @@
 package com.onehumanawa.cnmcore.foundation.recipe.blockcrafting;
 
+import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -22,7 +24,7 @@ public class BlockCraftingRecipe {
 
     private final ResourceLocation id;
     private final List<PatternEntry> pattern;
-    private final String centerId;
+    private final char centerSymbol;
     private final String itemInputId;
     private final List<String> resultIds;
     private final List<CraftingAction> actions;
@@ -34,7 +36,7 @@ public class BlockCraftingRecipe {
     public BlockCraftingRecipe(
             ResourceLocation id,
             List<PatternEntry> pattern,
-            String centerId,
+            char centerSymbol,
             String itemInputId,
             List<String> resultIds,
             List<CraftingAction> actions,
@@ -45,7 +47,7 @@ public class BlockCraftingRecipe {
     ) {
         this.id = id;
         this.pattern = List.copyOf(pattern);
-        this.centerId = centerId;
+        this.centerSymbol = centerSymbol;
         this.itemInputId = itemInputId;
         this.resultIds = List.copyOf(resultIds);
         this.actions = List.copyOf(actions);
@@ -57,7 +59,7 @@ public class BlockCraftingRecipe {
 
     public ResourceLocation id() { return id; }
     public List<PatternEntry> pattern() { return pattern; }
-    public String centerId() { return centerId; }
+    public char centerSymbol() { return centerSymbol; }
     public String itemInputId() { return itemInputId; }
     public List<String> resultIds() { return resultIds; }
     public List<CraftingAction> actions() { return actions; }
@@ -68,18 +70,22 @@ public class BlockCraftingRecipe {
 
     public record PatternEntry(Vec3i offset, String blockId, char symbol) {}
 
+    /**
+     * Whether the given pattern entry represents the center block of the structure,
+     * matched by pattern symbol.
+     */
+    public boolean isCenter(PatternEntry entry) {
+        return centerSymbol != 0 && entry.symbol() == centerSymbol;
+    }
+
     public int matchingRotation(ServerLevel level, BlockPos center) {
         for (int rotation = 0; rotation < 4; rotation++) {
             boolean matches = true;
             for (PatternEntry entry : pattern) {
                 Vec3i offset = rotate(entry.offset(), rotation);
                 BlockState state = level.getBlockState(center.offset(offset));
-                var block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(entry.blockId()));
-                if (block == null || block == Blocks.AIR) {
-                    matches = false;
-                    break;
-                }
-                if (!state.is(block)) {
+                var block = resolveBlock(entry.blockId());
+                if (block == null || !state.is(block)) {
                     matches = false;
                     break;
                 }
@@ -90,7 +96,7 @@ public class BlockCraftingRecipe {
     }
 
     public boolean matches(ServerLevel level, BlockPos center, ItemStack stack) {
-        var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemInputId));
+        var item = resolveItem(itemInputId);
         if (item == null || !stack.is(item)) return false;
         return matchingRotation(level, center) >= 0;
     }
@@ -101,7 +107,7 @@ public class BlockCraftingRecipe {
 
     public boolean craft(ServerLevel level, BlockPos center, ServerPlayer player, ItemStack inputStack, int rotation, boolean isDeployer) {
         if (rotation < 0 || rotation > 3) return false;
-        var inputItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemInputId));
+        var inputItem = resolveItem(itemInputId);
         if (inputItem == null || !inputStack.is(inputItem)) return false;
 
         // Destroy pattern blocks
@@ -122,16 +128,20 @@ public class BlockCraftingRecipe {
         // For Deployer, results are handled by BlockCraftingEvents via addItem
         if (!isDeployer) {
             for (String resultId : resultIds) {
-                var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(resultId));
-                if (item != null && item != Items.AIR) {
+                var item = resolveItem(resultId);
+                if (item != null) {
                     Block.popResource(level, center, new ItemStack(item, 1));
                 }
             }
         }
 
-        // Execute custom actions
+        // Execute custom actions; a failing action must never break crafting
         for (CraftingAction action : actions) {
-            action.execute(level, center, player);
+            try {
+                action.execute(level, center, player);
+            } catch (Exception e) {
+                CNMCore.LOGGER.error("[BlockCrafting] Action failed for recipe {} at {}:", id, center, e);
+            }
         }
 
         return true;
@@ -146,5 +156,23 @@ public class BlockCraftingRecipe {
             case 2 -> new Vec3i(-x, offset.getY(), -z);
             default -> new Vec3i(z, offset.getY(), -x);
         };
+    }
+
+    /** Resolves a block id defensively; invalid or missing ids yield {@code null}. */
+    private static Block resolveBlock(String blockId) {
+        if (blockId == null || blockId.isBlank()) return null;
+        ResourceLocation id = ResourceLocation.tryParse(blockId);
+        if (id == null) return null;
+        var block = BuiltInRegistries.BLOCK.get(id);
+        return block == Blocks.AIR ? null : block;
+    }
+
+    /** Resolves an item id defensively; invalid or missing ids yield {@code null}. */
+    private static Item resolveItem(String itemId) {
+        if (itemId == null || itemId.isBlank()) return null;
+        ResourceLocation id = ResourceLocation.tryParse(itemId);
+        if (id == null) return null;
+        var item = BuiltInRegistries.ITEM.get(id);
+        return item == Items.AIR ? null : item;
     }
 }

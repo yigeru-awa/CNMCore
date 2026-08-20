@@ -3,10 +3,13 @@ package com.onehumanawa.cnmcore.foundation.item;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.onehumanawa.cnmcore.CNMCore;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Chained builder modifying the membership of one item tag at runtime,
@@ -23,9 +26,18 @@ import net.minecraft.world.item.Item;
 public final class ItemTagBuilder {
 
     private final TagKey<Item> tagKey;
+    private final boolean valid;
 
     public ItemTagBuilder(String tagId) {
-        this.tagKey = TagKey.create(Registries.ITEM, parseId(tagId));
+        ResourceLocation id = parseId(tagId);
+        if (id == null) {
+            CNMCore.LOGGER.error("[ItemTag] Invalid tag id: '{}' - expected \"modid:path\", modifications ignored", tagId);
+            this.valid = false;
+            this.tagKey = TagKey.create(Registries.ITEM, CNMCore.asResource("invalid_tag"));
+            return;
+        }
+        this.valid = true;
+        this.tagKey = TagKey.create(Registries.ITEM, id);
     }
 
     /** The tag this builder mutates. */
@@ -42,7 +54,9 @@ public final class ItemTagBuilder {
      * @return this builder
      */
     public ItemTagBuilder add(String... itemIds) {
-        TagModificationHandler.addAdditions(tagKey, parse(itemIds));
+        if (valid) {
+            TagModificationHandler.addAdditions(tagKey, parse(itemIds));
+        }
         return this;
     }
 
@@ -55,22 +69,34 @@ public final class ItemTagBuilder {
      * @return this builder
      */
     public ItemTagBuilder remove(String... itemIds) {
-        TagModificationHandler.addRemovals(tagKey, parse(itemIds));
+        if (valid) {
+            TagModificationHandler.addRemovals(tagKey, parse(itemIds));
+        }
         return this;
     }
 
-    private static List<ResourceLocation> parse(String[] specs) {
+    private List<ResourceLocation> parse(String[] specs) {
         List<ResourceLocation> ids = new ArrayList<>(specs.length);
         for (String spec : specs) {
-            ids.add(parseId(ItemSpec.decode(spec).id()));
+            ResourceLocation id = parseId(ItemSpec.decode(spec).id());
+            if (id != null) {
+                ids.add(id);
+            } else {
+                CNMCore.LOGGER.warn("[ItemTag] Invalid item id '{}' ignored for tag {}", spec, tagKey.location());
+            }
         }
         return ids;
     }
 
+    @Nullable
     private static ResourceLocation parseId(String s) {
-        String[] parts = s.split(":", 2);
-        return parts.length == 2
-                ? ResourceLocation.fromNamespaceAndPath(parts[0], parts[1])
-                : ResourceLocation.withDefaultNamespace(s);
+        try {
+            String[] parts = s.split(":", 2);
+            return parts.length == 2
+                    ? ResourceLocation.fromNamespaceAndPath(parts[0], parts[1])
+                    : ResourceLocation.withDefaultNamespace(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
