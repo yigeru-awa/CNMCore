@@ -124,7 +124,7 @@ public final class KubeJavaRecipeModifier {
                     "vintageimprovements:sequenced_assembly/redstone_module"
             ).remove();
 
-            LOGGER.debug("Recipe removal phase completed - 10 recipes removed");
+            LOGGER.debug("Recipe removal phase completed");
         }
     }
 
