@@ -9,6 +9,7 @@ import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 @JeiPlugin
 public class CNMJeiPlugin implements IModPlugin {
@@ -16,7 +17,7 @@ public class CNMJeiPlugin implements IModPlugin {
     private static final ResourceLocation ID = CNMCore.asResource("jei_plugin");
 
     @Override
-    public ResourceLocation getPluginUid() {
+    public @NotNull ResourceLocation getPluginUid() {
         return ID;
     }
 

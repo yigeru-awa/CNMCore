@@ -62,7 +62,7 @@ public final class CraftingActions {
 
     /** Plays a sound at the crafting position with default volume and pitch. */
     public static CraftingAction sound(String soundId) {
-        return sound(soundId, 1.0f, 1.0f);
+        return sound(soundId, 0.1f, 0.1f);
     }
 
     /** Plays the given sound event at the crafting position. */

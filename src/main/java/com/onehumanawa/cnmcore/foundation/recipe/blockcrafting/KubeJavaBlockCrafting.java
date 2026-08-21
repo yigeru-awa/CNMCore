@@ -62,7 +62,7 @@ public final class KubeJavaBlockCrafting {
                 .consumeCenter(true)
                 .keepInput()
                 .result("create:andesite_alloy", 4)
-                .action(CraftingActions.sound("minecraft:block.anvil_land"))
+                .action(CraftingActions.sound("minecraft:block.anvil.land"))
                 .action(CraftingActions.particles("minecraft:happy_villager", 10))
                 .feedback("cnmcore.blockcrafting.success", "Block crafted successfully", "成功进行方块合成")
                 .register();

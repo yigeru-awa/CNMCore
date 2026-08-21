@@ -46,7 +46,11 @@ public final class KubeJavaRecipeModifier {
                 "create:mixing/andesite_alloy",
                 "create:mixing/andesite_alloy_from_zinc",
                 "create:crafting/materials/andesite_alloy",
-                "create:crafting/materials/andesite_alloy_from_zinc"
+                "create:crafting/materials/andesite_alloy_from_zinc",
+                "create:sequenced_assembly/sturdy_sheet",
+                "create_connected:sequenced_assembly/control_chip",
+                "vintageimprovements:sequenced_assembly/recipe_card",
+                "vintageimprovements:sequenced_assembly/redstone_module"
         ).remove();
         addShapeless(
                 "crafting_shapeless/redprint",

@@ -70,11 +70,12 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.recipe.block_crafting.output", "Output");
         generateLang("cnmcore.recipe.block_crafting.not_consumed", "Not Consumed");
         generateLang("cnmcore.recipe.block_crafting.consumed", "Consumed");
-        generateLang("cnmcore.recipe.block_crafting.consumed_status", "Status: %s");
+        generateLang("cnmcore.recipe.block_crafting.consumed_status", "%s");
         generateLang("cnmcore.recipe.block_crafting.center_marker", "Center Block");
         generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "Kept");
-        generateLang("cnmcore.recipe.block_crafting.layer_scroll", "Scroll on the structure to view layers");
-        generateLang("cnmcore.recipe.block_crafting.layer", "Layer %s / %s");
+        generateLang("cnmcore.recipe.block_crafting.use", "Use");
+        generateLang("cnmcore.recipe.block_crafting.right_click", "Right Click");
+        generateLang("cnmcore.recipe.block_crafting.desc1", "To Craft");
 
         generateLang("itemGroup.cnmcore.main", "CNM Core");
     }
@@ -100,11 +101,12 @@ public class ModLangProvider extends LanguageProvider {
         generateLang("cnmcore.recipe.block_crafting.output", "产出");
         generateLang("cnmcore.recipe.block_crafting.not_consumed", "不会被消耗");
         generateLang("cnmcore.recipe.block_crafting.consumed", "被消耗");
-        generateLang("cnmcore.recipe.block_crafting.consumed_status", "状态: %s");
+        generateLang("cnmcore.recipe.block_crafting.consumed_status", "%s");
         generateLang("cnmcore.recipe.block_crafting.center_marker", "中心方块");
         generateLang("cnmcore.recipe.block_crafting.not_consumed_short", "保留");
-        generateLang("cnmcore.recipe.block_crafting.layer_scroll", "在结构上滚动滚轮以按层查看");
-        generateLang("cnmcore.recipe.block_crafting.layer", "层数: %s / %s");
+        generateLang("cnmcore.recipe.block_crafting.use", "使用");
+        generateLang("cnmcore.recipe.block_crafting.right_click", "右键");
+        generateLang("cnmcore.recipe.block_crafting.desc1", "进行合成");
 
         generateLang("itemGroup.cnmcore.main", "联结机构 | 核心");
     }
