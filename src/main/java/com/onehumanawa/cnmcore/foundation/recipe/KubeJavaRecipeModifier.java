@@ -55,7 +55,7 @@ public final class KubeJavaRecipeModifier {
         ).remove();
         addShapeless(
                 "crafting_shapeless/redprint",
-                new String[]{"create:schematic_and_quill", "minecraft:red_dye"},
+                arr("create:schematic_and_quill", "minecraft:red_dye"),
                 "cnmcore:redprint"
         );
     }
@@ -556,7 +556,7 @@ public final class KubeJavaRecipeModifier {
     }
 
     // ============================
-    // Vintage Improvements: Rolling (Create Addition)
+    // Create Addition: Rolling
     // ============================
 
     /**
@@ -984,5 +984,15 @@ public final class KubeJavaRecipeModifier {
 
     public static RecipeFilter byCustom(Predicate<RecipeFilter.RecipeInfo> predicate) {
         return new RecipeFilter(predicate);
+    }
+
+    /**
+     * Creates a string array from varargs for cleaner recipe definitions.
+     *
+     * @param items the items to include in the array
+     * @return a string array
+     */
+    public static String[] arr(String... items) {
+        return items;
     }
 }
