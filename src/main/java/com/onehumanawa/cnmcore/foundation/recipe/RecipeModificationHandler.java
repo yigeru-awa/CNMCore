@@ -53,6 +53,9 @@ public class RecipeModificationHandler {
     /** All registered filters; recipe changes are declared against them. */
     private static final List<RecipeFilter> FILTERS = new ArrayList<>();
 
+    /** Completed filters that have been executed and should not be modified further. */
+    private static final List<RecipeFilter> COMPLETED_FILTERS = new ArrayList<>();
+
     // Runtime references for the public query API
     private static RecipeManager recipeManager;
     private static ResourceManager resourceManager;
@@ -64,6 +67,69 @@ public class RecipeModificationHandler {
 
     static void register(RecipeFilter filter) {
         FILTERS.add(filter);
+    }
+
+    /**
+     * Marks a filter as complete/executed.
+     * <p>
+     * Once a filter is completed, it is moved from the active filters list
+     * to the completed filters list and cannot be modified further.
+     * This ensures that filters are properly finalized before recipe processing.
+     * </p>
+     *
+     * @param filter The filter to mark as complete
+     * @throws IllegalArgumentException if the filter is not registered
+     */
+    static void complete(RecipeFilter filter) {
+        if (FILTERS.remove(filter)) {
+            COMPLETED_FILTERS.add(filter);
+            CNMCore.LOGGER.debug("[Recipe] Filter completed: {}", filter);
+        } else {
+            throw new IllegalArgumentException("Filter not registered: " + filter);
+        }
+    }
+
+    /**
+     * Checks if a filter has been completed.
+     *
+     * @param filter The filter to check
+     * @return {@code true} if the filter is completed
+     */
+    public static boolean isCompleted(RecipeFilter filter) {
+        return COMPLETED_FILTERS.contains(filter);
+    }
+
+    /**
+     * Gets the number of active (not yet completed) filters.
+     *
+     * @return The count of active filters
+     */
+    public static int getActiveFilterCount() {
+        return FILTERS.size();
+    }
+
+    /**
+     * Gets the number of completed filters.
+     *
+     * @return The count of completed filters
+     */
+    public static int getCompletedFilterCount() {
+        return COMPLETED_FILTERS.size();
+    }
+
+    /**
+     * Clears all completed filters. Useful for testing or resetting state.
+     */
+    static void clearCompletedFilters() {
+        COMPLETED_FILTERS.clear();
+    }
+
+    /**
+     * Clears all filters (both active and completed). Useful for testing.
+     */
+    static void clearAllFilters() {
+        FILTERS.clear();
+        COMPLETED_FILTERS.clear();
     }
 
     // ------------------------------------------------------------------
@@ -112,7 +178,9 @@ public class RecipeModificationHandler {
         recipeManager = manager;
         resourceManager = resources;
         Map<ResourceLocation, JsonObject> added = KubeJavaDatagenSupport.getAddedRecipes();
-        if (FILTERS.isEmpty() && added.isEmpty())
+
+        // Check if there are any active or completed filters to process
+        if (FILTERS.isEmpty() && COMPLETED_FILTERS.isEmpty() && added.isEmpty())
             return;
 
         RegistryOps<JsonElement> ops = registries.createSerializationContext(JsonOps.INSTANCE);
@@ -124,12 +192,17 @@ public class RecipeModificationHandler {
         int removedCount = 0;
         int modifiedCount = 0;
 
+        // Combine active and completed filters for processing
+        List<RecipeFilter> allFilters = new ArrayList<>();
+        allFilters.addAll(FILTERS);
+        allFilters.addAll(COMPLETED_FILTERS);
+
         for (RecipeHolder<?> holder : manager.getRecipes()) {
             ResourceLocation typeId = typeIds.get(holder.value().getType());
             RecipeFilter.RecipeInfo info = new RecipeFilter.RecipeInfo(holder.id(), holder.id().getNamespace(), typeId);
 
             List<RecipeFilter> matched = new ArrayList<>();
-            for (RecipeFilter filter : FILTERS)
+            for (RecipeFilter filter : allFilters)
                 if (filter.matches(info))
                     matched.add(filter);
 
@@ -182,6 +255,12 @@ public class RecipeModificationHandler {
         manager.replaceRecipes(result.values());
         CNMCore.LOGGER.info("[Recipe] Processing done: {} removed, {} modified, {} added",
                 removedCount, modifiedCount, addedCount);
+
+        // Clear completed filters after processing to prevent memory leaks
+        // (they've been applied and are no longer needed)
+        // Note: We keep the filters for potential future reloads, so we don't clear them.
+        // If you want to clear them, uncomment the line below:
+        // clearCompletedFilters();
     }
 
     private static RecipeHolder<?> tryModify(RecipeHolder<?> holder, ResourceManager resources,
