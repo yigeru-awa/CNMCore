@@ -160,12 +160,15 @@ dependencies {
     // Create Connected
     implementation("curse.maven:create-connected-947914:8299240")
 
+    // Vintage Improvements SSW
+    implementation("curse.maven:vintage-improvenents-ssw-edition-1255448:8600647")
+
     // Architectury API
     implementation("curse.maven:architectury-api-419699:8492726")
 
     // FTB Series
     implementation("curse.maven:ftb-library-forge-404465:8569579")
-    // implementation("curse.maven:ftb-quests-forge-289412:8648333")
+    implementation("curse.maven:ftb-quests-forge-289412:8648333")
     implementation("curse.maven:ftb-teams-forge-404468:7878281")
 
     // Modern UI

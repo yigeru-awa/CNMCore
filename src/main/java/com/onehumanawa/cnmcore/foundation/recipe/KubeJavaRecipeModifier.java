@@ -28,6 +28,7 @@ import java.util.function.Predicate;
  * <ul>
  *   <li>Vanilla: Shaped, Shapeless, Smelting, Blasting, Smoking, Campfire, Stonecutting</li>
  *   <li>Create: Mechanical Crafting, Mixing, Milling, Crushing, Splashing, Haunting, Compacting, Pressing, Filling, Emptying</li>
+ *   <li>Vintage Improvements: Centrifugation, Coiling, Curving, Polishing, Hammering, Laser Cutting, Pressurizing, Rolling, Turning, Vacuumizing, Leaves Vibrating</li>
  * </ul>
  */
 @SuppressWarnings("unused")
@@ -295,6 +296,461 @@ public final class KubeJavaRecipeModifier {
     }
 
     // ============================
+    // Vintage Improvements: Centrifugation
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements centrifugation recipe.
+     * Centrifugation separates ingredients into multiple outputs.
+     *
+     * @param id              recipe id (e.g. "vintageimprovements:centrifugation/example")
+     * @param itemInputs      array of item ingredient specs
+     * @param itemOutputs     array of output item specs with optional counts (format: "item" or "item*count")
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageCentrifugation(String id, String[] itemInputs, String[] itemOutputs, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:centrifugation");
+
+        JsonArray ingredients = new JsonArray();
+        for (String spec : itemInputs) {
+            if (spec != null && !spec.isEmpty()) {
+                ingredients.add(ingredient(spec));
+            }
+        }
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        for (String spec : itemOutputs) {
+            if (spec != null && !spec.isEmpty()) {
+                results.add(parseItemStack(spec));
+            }
+        }
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements centrifugation recipe with default processing time (1000 ticks).
+     */
+    public static void addVintageCentrifugation(String id, String[] itemInputs, String[] itemOutputs) {
+        addVintageCentrifugation(id, itemInputs, itemOutputs, 1000);
+    }
+
+    // ============================
+    // Vintage Improvements: Coiling
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements coiling recipe.
+     * Coils a rod into a spring.
+     *
+     * @param id              recipe id
+     * @param itemInput       rod ingredient spec (typically a tag like "#c:rods/aluminum")
+     * @param itemOutput      output spring item spec
+     * @param springColor     hex color code for the spring (e.g. "d0d4d4")
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageCoiling(String id, String itemInput, String itemOutput, String springColor, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:coiling");
+        json.addProperty("spring_color", springColor);
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, 1));
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements coiling recipe with default processing time (120 ticks).
+     */
+    public static void addVintageCoiling(String id, String itemInput, String itemOutput, String springColor) {
+        addVintageCoiling(id, itemInput, itemOutput, springColor, 120);
+    }
+
+    // ============================
+    // Vintage Improvements: Curving
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements curving recipe.
+     * Curves an item using a head item as a mold.
+     *
+     * @param id            recipe id
+     * @param itemInput     input ingredient spec
+     * @param itemOutput    output item spec
+     * @param itemAsHead    item used as the curving head/mold
+     */
+    public static void addVintageCurving(String id, String itemInput, String itemOutput, String itemAsHead) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:curving");
+        json.addProperty("item_as_head", itemAsHead);
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, 1));
+        json.add("results", results);
+
+        addRecipe(id, json);
+    }
+
+    // ============================
+    // Vintage Improvements: Polishing
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements polishing recipe.
+     * Polishes an item with speed limits.
+     *
+     * @param id              recipe id
+     * @param itemInput       input ingredient spec
+     * @param itemOutput      output item spec
+     * @param processingTime  processing time in ticks
+     * @param speedLimits     minimum RPM required (e.g. 1, 4, 16)
+     */
+    public static void addVintagePolishing(String id, String itemInput, String itemOutput, int processingTime, int speedLimits) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:polishing");
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, 1));
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        json.addProperty("speed_limits", speedLimits);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements polishing recipe with default processing time (20 ticks) and speed limit (1 RPM).
+     */
+    public static void addVintagePolishing(String id, String itemInput, String itemOutput) {
+        addVintagePolishing(id, itemInput, itemOutput, 20, 1);
+    }
+
+    // ============================
+    // Vintage Improvements: Hammering
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements hammering recipe.
+     * Hammers an ingot into a sheet.
+     *
+     * @param id              recipe id
+     * @param itemInput       input ingredient spec (typically an ingot)
+     * @param itemOutput      output item spec (typically a sheet)
+     * @param hammerBlows     number of hammer blows required (e.g. 3)
+     */
+    public static void addVintageHammering(String id, String itemInput, String itemOutput, int hammerBlows) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:hammering");
+        json.addProperty("hammer_blows", hammerBlows);
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, 1));
+        json.add("results", results);
+
+        addRecipe(id, json);
+    }
+
+    // ============================
+    // Vintage Improvements: Laser Cutting
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements laser cutting recipe.
+     * Cuts an item with laser energy.
+     *
+     * @param id               recipe id
+     * @param itemInput        input ingredient spec
+     * @param itemOutputs      array of output item specs with optional counts
+     * @param energy           total energy required in FE
+     * @param maxChargeRate    maximum charge rate in FE/tick
+     */
+    public static void addVintageLaserCutting(String id, String itemInput, String[] itemOutputs, int energy, int maxChargeRate) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:laser_cutting");
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        for (String spec : itemOutputs) {
+            if (spec != null && !spec.isEmpty()) {
+                results.add(parseItemStack(spec));
+            }
+        }
+        json.add("results", results);
+
+        json.addProperty("energy", energy);
+        json.addProperty("max_charge_rate", maxChargeRate);
+        addRecipe(id, json);
+    }
+
+    // ============================
+    // Vintage Improvements: Pressurizing
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements pressurizing recipe.
+     * Pressurizes an item to produce a fluid output.
+     *
+     * @param id                     recipe id
+     * @param itemInput              input ingredient spec
+     * @param fluidOutputId          fluid output id (e.g. "vintageimprovements:sulfur_dioxide")
+     * @param fluidOutputAmount      fluid output amount in millibuckets
+     * @param heatRequirement        heat requirement: null for none, "heated" or "superheated"
+     * @param processingTime         processing time in ticks
+     */
+    public static void addVintagePressurizing(String id, String itemInput, String fluidOutputId, int fluidOutputAmount,
+                                              String heatRequirement, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:pressurizing");
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        json.add("results", new JsonArray());
+
+        if (heatRequirement != null && !heatRequirement.isEmpty()) {
+            json.addProperty("heat_requirement", heatRequirement);
+        }
+
+        json.addProperty("processing_time", processingTime);
+
+        JsonObject fluidOutput = new JsonObject();
+        fluidOutput.addProperty("id", fluidOutputId);
+        fluidOutput.addProperty("amount", fluidOutputAmount);
+        json.add("secondary_fluid_output", fluidOutput);
+
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements pressurizing recipe with heated requirement.
+     */
+    public static void addVintagePressurizing(String id, String itemInput, String fluidOutputId, int fluidOutputAmount) {
+        addVintagePressurizing(id, itemInput, fluidOutputId, fluidOutputAmount, "heated", 600);
+    }
+
+    // ============================
+    // Vintage Improvements: Rolling (Create Addition)
+    // ============================
+
+    /**
+     * Adds a Create Addition rolling recipe.
+     * Rolls an ingot into rods.
+     *
+     * @param id              recipe id
+     * @param itemInput       input ingredient spec (typically an ingot tag)
+     * @param itemOutput      output rod item spec
+     * @param outputCount     number of rods produced
+     */
+    public static void addCreateAdditionRolling(String id, String itemInput, String itemOutput, int outputCount) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "createaddition:rolling");
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, outputCount));
+        json.add("results", results);
+
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Create Addition rolling recipe with output count 2.
+     */
+    public static void addCreateAdditionRolling(String id, String itemInput, String itemOutput) {
+        addCreateAdditionRolling(id, itemInput, itemOutput, 2);
+    }
+
+    // ============================
+    // Vintage Improvements: Turning
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements turning recipe.
+     * Turns a storage block into a curving head.
+     *
+     * @param id              recipe id
+     * @param itemInput       input ingredient spec (typically a storage block)
+     * @param itemOutput      output item spec
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageTurning(String id, String itemInput, String itemOutput, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:turning");
+
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredient(itemInput));
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        results.add(itemStack(itemOutput, 1));
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements turning recipe with default processing time (200 ticks).
+     */
+    public static void addVintageTurning(String id, String itemInput, String itemOutput) {
+        addVintageTurning(id, itemInput, itemOutput, 200);
+    }
+
+    // ============================
+    // Vintage Improvements: Vacuumizing
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements vacuumizing recipe.
+     * Processes items in a vacuum chamber.
+     *
+     * @param id              recipe id
+     * @param itemInputs      array of input ingredient specs
+     * @param itemOutputs     array of output item specs
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageVacuumizing(String id, String[] itemInputs, String[] itemOutputs, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:vacuumizing");
+
+        JsonArray ingredients = new JsonArray();
+        for (String spec : itemInputs) {
+            if (spec != null && !spec.isEmpty()) {
+                ingredients.add(ingredient(spec));
+            }
+        }
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        for (String spec : itemOutputs) {
+            if (spec != null && !spec.isEmpty()) {
+                results.add(itemStack(spec, 1));
+            }
+        }
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements vacuumizing recipe with default processing time (600 ticks).
+     */
+    public static void addVintageVacuumizing(String id, String[] itemInputs, String[] itemOutputs) {
+        addVintageVacuumizing(id, itemInputs, itemOutputs, 600);
+    }
+
+    // ============================
+    // Vintage Improvements: Leaves Vibrating
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements leaves vibrating recipe.
+     * Vibrates leaves to produce outputs (typically no item output, just drops).
+     *
+     * @param id              recipe id
+     * @param itemInputs      array of input ingredient specs (typically a leaves tag)
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageLeavesVibrating(String id, String[] itemInputs, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:leaves_vibrating");
+
+        JsonArray ingredients = new JsonArray();
+        for (String spec : itemInputs) {
+            if (spec != null && !spec.isEmpty()) {
+                ingredients.add(ingredient(spec));
+            }
+        }
+        json.add("ingredients", ingredients);
+
+        json.add("results", new JsonArray());
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements leaves vibrating recipe with default processing time (300 ticks).
+     */
+    public static void addVintageLeavesVibrating(String id, String[] itemInputs) {
+        addVintageLeavesVibrating(id, itemInputs, 300);
+    }
+
+    // ============================
+    // Vintage Improvements: Vibrating
+    // ============================
+
+    /**
+     * Adds a Vintage Improvements vibrating recipe.
+     * Vibrates items to transform them into other items.
+     *
+     * @param id              recipe id
+     * @param itemInputs      array of input ingredient specs
+     * @param itemOutputs     array of output item specs with optional counts (format: "item" or "item*count")
+     * @param processingTime  processing time in ticks
+     */
+    public static void addVintageVibrating(String id, String[] itemInputs, String[] itemOutputs, int processingTime) {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "vintageimprovements:vibrating");
+
+        JsonArray ingredients = new JsonArray();
+        for (String spec : itemInputs) {
+            if (spec != null && !spec.isEmpty()) {
+                ingredients.add(ingredient(spec));
+            }
+        }
+        json.add("ingredients", ingredients);
+
+        JsonArray results = new JsonArray();
+        for (String spec : itemOutputs) {
+            if (spec != null && !spec.isEmpty()) {
+                results.add(parseItemStack(spec));
+            }
+        }
+        json.add("results", results);
+
+        json.addProperty("processing_time", processingTime);
+        addRecipe(id, json);
+    }
+
+    /**
+     * Adds a Vintage Improvements vibrating recipe with default processing time (300 ticks).
+     */
+    public static void addVintageVibrating(String id, String[] itemInputs, String[] itemOutputs) {
+        addVintageVibrating(id, itemInputs, itemOutputs, 300);
+    }
+
+    // ============================
     // Vanilla Crafting
     // ============================
 
@@ -443,6 +899,19 @@ public final class KubeJavaRecipeModifier {
 
     private static JsonObject itemStack(String item, int count) {
         return ItemSpec.stackJson(item, count);
+    }
+
+    /**
+     * Parses an item stack spec in the format "item" or "item*count".
+     */
+    private static JsonObject parseItemStack(String spec) {
+        if (spec.contains("*")) {
+            String[] parts = spec.split("\\*");
+            String item = parts[0];
+            int count = Integer.parseInt(parts[1]);
+            return itemStack(item, count);
+        }
+        return itemStack(spec, 1);
     }
 
     // ============================
