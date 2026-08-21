@@ -160,9 +160,6 @@ dependencies {
     // Create Connected
     implementation("curse.maven:create-connected-947914:8299240")
 
-    // Vintage Improvements SSW
-    implementation("curse.maven:vintage-improvenents-ssw-edition-1255448:8600647")
-
     // Architectury API
     implementation("curse.maven:architectury-api-419699:8492726")
 
